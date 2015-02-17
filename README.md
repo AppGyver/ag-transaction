@@ -112,7 +112,7 @@ The result of this operation, however, is not a `Transaction` but a `Promise`. T
 
 We often want to perform a transaction as multiple sequential steps, where a step depends on the output of a previous one. We achieve this with `flatMapDone`, which accepts the value from the previous step's `done` and returns a new `Transaction`.
 
-    createFile.flatMapDone (file) ->
+    createFileVersion = createFile.flatMapDone (file) ->
       Transaction.step (rollback, progress) ->
         model("fileversions").create(data).then (fileVersion) ->
           rollback ->
@@ -121,6 +121,27 @@ We often want to perform a transaction as multiple sequential steps, where a ste
           {file, fileVersion}
 
 In terms of our type it means we take a `Transaction`, add another step and get a bigger `Transaction` back. `flatMapDone` will take care to retain the rollback instructions and progress events for us.
+
+## Manipulating transaction `progress` with `mapProgress`
+
+Basing on the previous example, events in `createFileVersion.progress` will be:
+
+    "file created"
+    "fileversion created"
+
+Imagine we didn't care for the strings much at all and would prefer to see an incrementing counter. We need to switch out the `progress` stream's contents.
+
+    createFileVersion.mapProgress (events) ->
+      events.scan(0, (count, event) -> count + 1)
+
+Resulting events in `progress` are:
+
+    0
+    1
+    2
+
+This becomes especially relevant if we wish to aggregate multiple parallel transactions.
+
 
 
 
