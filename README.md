@@ -44,6 +44,13 @@ The full type is therefore:
 
 ## Creating a Transaction with `Transaction.step`
 
+Transaction.step is a function that allows us to lift `Promise`-yielding processes into `Transaction`.
+
+    Transaction.step :: ((
+      rollback: () -> Promise
+      progress: (p) -> ()
+    ) -> Promise d) -> Transaction p d
+
 Let's take a procedure and bake it into a `Transaction`.
 
     model("files").create(data).then (file) ->
