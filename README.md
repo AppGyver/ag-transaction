@@ -87,3 +87,36 @@ We can also provide progress notifications. Ignoring the rollback instructions f
 
 The example provides a string as the notification, but it can be whatever the consumer should be able to process.
 
+## Chaining `Transaction` steps with `flatMapDone`
+
+Let's imagine we wanted to split the two asynchronous steps we had before.
+
+    createFile = Transaction.step (rollback, progress) ->
+      model("files").create(data).then (file) ->
+        rollback ->
+          file.delete()
+        progress "file created"
+        file
+
+If we wanted to continue off the value in `done` after this step, we could of course do this:
+
+    createFile.done.then (file) ->
+      model("fileversions").create(data).then (fileVersion) ->
+        {file, fileVersion}
+
+The result of this operation, however, is not a `Transaction` but a `Promise`. The consumer of this value would not be able to abort the process or inspect its progress - what's done is done and what's not done is not done.
+
+We often want to perform a transaction as multiple sequential steps, where a step depends on the output of a previous one. We achieve this with `flatMapDone`, which accepts the value from the previous step's `done` and returns a new `Transaction`.
+
+    createFile.flatMapDone (file) ->
+      Transaction.step (rollback, progress) ->
+        model("fileversions").create(data).then (fileVersion) ->
+          rollback ->
+            fileVersion.delete()
+          progress "fileversion created"
+          {file, fileVersion}
+
+In terms of our type it means we take a `Transaction`, add another step and get a bigger `Transaction` back. `flatMapDone` will take care to retain the rollback instructions and progress events for us.
+
+
+
