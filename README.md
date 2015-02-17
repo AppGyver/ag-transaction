@@ -33,9 +33,13 @@ We additionally require that we can signal abortion of the process,
 
     abort: () -> Promise
 
-as well as being able to continue off the result of the next step,
+being able to continue off the result of the next step,
 
     flatMapDone: ((d) -> Transaction p e) -> Transaction p e
+
+and being able to affect the `progress` stream,
+
+    mapProgress: ((Stream p) -> (Stream q)) -> Transaction q d
 
 The full type is therefore:
 
@@ -44,6 +48,7 @@ The full type is therefore:
       done: Promise d
       abort: () -> Promise
       flatMapDone: ((d) -> Transaction p e) -> Transaction p e
+      mapProgress: ((Stream p) -> (Stream q)) -> Transaction q d
     }
 
 ## Creating a Transaction with `Transaction.step`
