@@ -2,6 +2,10 @@
 
 Provides a type for asynchronous, rollbackable transactions with progress notifications
 
+## Prerequisites
+
+Assuming a familiarity with [Bluebird](https://github.com/petkaantonov/bluebird/) Promises and [Bacon.js](https://github.com/baconjs/bacon.js/) Streams.
+
 ## Use case
 
 Assume we have a multi-part asynchronous process.
