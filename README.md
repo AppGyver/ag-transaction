@@ -142,6 +142,32 @@ Resulting events in `progress` are:
 
 This becomes especially relevant if we wish to aggregate multiple parallel transactions.
 
+## Parallel transactions with `Transaction.all`
 
+Careful observation reveals the `createFile` and `createFileVersion` steps do not in fact depend on each other. What we have instead are distinct steps we wish to execute in parallel.
 
+    createFileAndFileVersion = Transaction.all([
+      Transaction.step (rollback, progress) ->
+        model("files").create(data).then (file) ->
+          rollback ->
+            file.delete()
+          progress "file created"
+          file
+      Transaction.step (rollback, progress) ->
+        model("fileversions").create(data).then (fileVersion) ->
+          rollback ->
+            fileVersion.delete()
+          progress "fileversion created"
+          fileVersion
+    ])
 
+`Transaction.all` accepts an array of `Transactions`. The resulting `Transaction` will have a `done` populated with an array of the corresponding values.
+
+    createFileAndFileVersion.flatMapDone ([file, fileVersion]) ->
+      Transaction.unit { file, fileVersion }
+
+This step would return the pair in an array back into an object as before. `Transaction.unit` yields a `Transaction` with nothing but the end result. It's the same as using `Transaction.step` and `Promise.resolve` in conjunction, so could have been expressed like this.
+
+    createFileAndFileVersion.flatMapDone ([file, fileVersion]) ->
+      Transaction.step ->
+        Promise.resolve { file, fileVersion }
