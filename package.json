@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/AppGyver/ag-transaction",
   "devDependencies": {
+    "bluebird": "^2.9.13",
     "chai": "^2.1.0",
     "coffee-script": "^1.9.1",
     "coffeelint": "^1.9.2",

@@ -11,9 +11,11 @@ class RunningTransaction
   }
 
   constructor: ({ done }) ->
-    @done = done if done?
+    @done = switch done?
+      when true then done
+      else Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
 
-  done: Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
+  done: null
 
   retry: ->
     alert 'TODO'
