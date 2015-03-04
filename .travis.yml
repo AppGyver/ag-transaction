@@ -1,0 +1,21 @@
+sudo: false
+cache:
+  directories:
+  - node_modules
+language: node_js
+node_js:
+- '0.10'
+before_install: npm install -g grunt-cli
+after_success: grunt travis
+deploy:
+  provider: npm
+  email: eevert.saukkokoski@appgyver.com
+  on:
+    tags: true
+    all_branches: true
+    repo: AppGyver/ag-transaction
+  api_key:
+    secure: BT+R94/UxyfyQXsld4n7Wk2BsPBg7M59bIgHsI1I9sD3qOE7yLCCzLP89dYpI3QJDx4ttLVclBndn/V/LbFtIPe46GIDVFh/xyGK8jbfozQ0AhKRtnRfqppowlhpjF6gfDvfV3QKfbDrVU72Ww335EOS6ZevPxqegdw8cNZvP8w=
+env:
+  global:
+    secure: YSn+AaNcVnLHXHO5140vfxuh5fNYx5Iv8Do2fPNSRNOFHbTSPZdwj3cB0pdowDKCqbkOPODkvpXnEiGDHAuL0cGexR4vKojI6ehLAE7W954jpsQ/mCP8Mnql1F7wlTTOUcv8hRMmE3wMiicJ8EXbtOHnbnluLuzRZ27/FepD5Tk=

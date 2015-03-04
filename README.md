@@ -1,4 +1,10 @@
-# ag-transaction
+ag-transaction
+========
+
+[![Build Status](http://img.shields.io/travis/AppGyver/ag-transaction/master.svg)](https://travis-ci.org/AppGyver/ag-transaction)
+[![NPM version](http://img.shields.io/npm/v/ag-transaction.svg)](https://www.npmjs.org/package/ag-transaction)
+[![Dependency Status](http://img.shields.io/david/AppGyver/ag-transaction.svg)](https://david-dm.org/AppGyver/ag-transaction)
+[![Coverage Status](https://img.shields.io/coveralls/AppGyver/ag-transaction.svg)](https://coveralls.io/r/AppGyver/ag-transaction)
 
 Provides a type for asynchronous, rollbackable transactions with progress notifications
 
