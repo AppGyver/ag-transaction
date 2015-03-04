@@ -1,6 +1,6 @@
 {
   "name": "ag-transaction",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "ag transaction npm library",
   "main": "lib/index.js",
   "scripts": {
