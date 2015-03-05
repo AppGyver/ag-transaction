@@ -11,6 +11,8 @@ Promise = require 'bluebird'
 Transaction = require('../src/transaction')(Promise)
 PreparedTransaction = require('../src/prepared-transaction')(Promise)
 
+transactions = require('./transactions')(Promise, Transaction)
+
 describe "ag-transaction.PreparedTransaction", ->
   it "is a class", ->
     PreparedTransaction.should.be.a 'function'
@@ -42,4 +44,20 @@ describe "ag-transaction.PreparedTransaction", ->
         )
         .done
         .should.be.rejected
+
+    describe 'abort', ->
+      it "resolves if the transaction's abort resolves", ->
+        new PreparedTransaction(->
+          transactions.abort('value')
+        )
+        .abort()
+        .should.eventually.equal 'value'
+
+      it "rejects if the transaction's abort rejects", ->
+        new PreparedTransaction(->
+          Transaction.empty
+        )
+        .abort()
+        .should.be.rejected
+
 

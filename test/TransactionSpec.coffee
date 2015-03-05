@@ -10,8 +10,7 @@ asserting = require './asserting'
 Promise = require 'bluebird'
 Transaction = require('../src/transaction')(Promise)
 
-never = new Promise (resolve, reject) ->
-  # Never resolve or reject
+{ never } = require('./transactions')(Promise, Transaction)
 
 describe "ag-transaction.Transaction", ->
   it "is a class", ->
