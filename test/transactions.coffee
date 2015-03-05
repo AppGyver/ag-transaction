@@ -5,7 +5,7 @@ module.exports = (Promise, Transaction) ->
   abort = (value) ->
     new Transaction {
       done: never
-      abort: -> value
+      abort: -> Promise.resolve "#{value} aborted"
     }
 
   rollback = (value) ->

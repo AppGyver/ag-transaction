@@ -51,7 +51,7 @@ describe "ag-transaction.PreparedTransaction", ->
           transactions.abort('value')
         )
         .abort()
-        .should.eventually.equal 'value'
+        .should.eventually.equal 'value aborted'
 
       it "rejects if the transaction's abort rejects", ->
         new PreparedTransaction(->
@@ -143,6 +143,51 @@ describe "ag-transaction.PreparedTransaction", ->
               transactions.rollback 'three'
           )
           .rollback()
+          .should.be.rejectedWith 'two fails'
+
+      describe "abort()", ->
+
+        it "combines aborts", ->
+          new PreparedTransaction(->
+            transactions.abort 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.abort 'two'
+          )
+          .abort()
+          .should.eventually.equal 'one aborted'
+
+        it "combines aborts in reverse sequence", ->
+          one = sinon.stub().returns 'one aborted'
+          two = sinon.stub().returns 'two aborted'
+          new PreparedTransaction(->
+            new Transaction {
+              done: transactions.never
+              abort: one
+            }
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              new Transaction {
+                done: transactions.never
+                abort: two
+              }
+          )
+          .abort()
+          .then ->
+            two.should.have.been.calledOnce
+            one.should.have.been.calledOnce
+
+        it "halts on the first abort that cannot be completed", ->
+          new PreparedTransaction(->
+            transactions.abort 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.failsAbort 'two fails'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.abort 'three'
+          )
+          .abort()
           .should.be.rejectedWith 'two fails'
 
 

@@ -58,4 +58,7 @@ module.exports = (Promise, Transaction) ->
             rollback: =>
               tb.rollback().then =>
                 @rollback()
+            abort: =>
+              tb.abort().then =>
+                @abort()
           }
