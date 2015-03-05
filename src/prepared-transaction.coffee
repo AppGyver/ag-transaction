@@ -30,8 +30,7 @@ module.exports = (Promise) ->
           )
           retry.resolve ->
             Promise.reject new Error "TODO"
-          abort.resolve ->
-            Promise.reject new Error "TODO"
+          abort.resolve t.abort
         )
 
     done: null
