@@ -55,7 +55,7 @@ describe "ag-transaction.PreparedTransaction", ->
           v.should.equal 'value'
 
   describe "instance", ->
-    describe "flatMapDone", ->
+    describe "flatMapDone()", ->
       it "is a function", ->
         PreparedTransaction.empty.flatMapDone.should.be.a 'function'
 

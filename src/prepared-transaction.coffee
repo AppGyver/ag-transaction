@@ -33,16 +33,18 @@ module.exports = (Promise, RunningTransaction) ->
       @retry = -> retry.promise.then (f) -> f()
       @abort = -> abort.promise.then (f) -> f()
 
-      Promise.resolve(startEventually).then (start) ->
-        t = start()
-        t.done.then(
-          done.resolve
-          done.reject
+      Promise.resolve(startEventually)
+        .then((start) -> start())
+        .then((t) ->
+          t.done.then(
+            done.resolve
+            done.reject
+          )
+          retry.resolve ->
+            Promise.reject new Error "TODO"
+          abort.resolve ->
+            Promise.reject new Error "TODO"
         )
-        retry.resolve ->
-          Promise.reject new Error "TODO"
-        abort.resolve ->
-          Promise.reject new Error "TODO"
 
     done: null
     retry: null
@@ -72,31 +74,29 @@ module.exports = (Promise, RunningTransaction) ->
         }
 
     ###
-    start :: () -> RunningTransaction a
+    start :: (() -> RunningTransaction a) | Promise (() -> RunningTransaction a)
     ###
     constructor: (start) ->
       ###
       g: (TransactionHandle a) -> (b | Promise b)
       ###
       @run = (g) ->
-        g new TransactionHandle start
+        Promise.resolve(g new TransactionHandle start)
 
     ###
     (f: (a) -> PreparedTransaction b) -> PreparedTransaction b
     ###
     flatMapDone: (f) ->
-      ###
-      g: (RunningTransaction b) -> (c | Promise c)
-      ###
-      new PreparedTransaction (g) =>
+      new PreparedTransaction =>
+        ###
+        Promise (RunningTransaction b)
+        ###
         @run (ta) ->
-          g new RunningTransaction {
-            done: ta.flatMapDone((a) ->
+          ta.done.then (a) ->
+            f(a).run (tb) ->
               new RunningTransaction {
-                done: f(a).run (tb) ->
-                  tb.done
-              }).done
-          }
+                done: tb.done
+              }
 
     ###
     run :: (f: (TransactionHandle a) -> (b | Promise b)) -> Promise b
