@@ -1,6 +1,9 @@
-chai = require('chai')
+chai = require 'chai'
+sinon = require 'sinon'
+
 chai.should()
 chai.use require 'chai-as-promised'
+chai.use require 'sinon-chai'
 
 asserting = require './asserting'
 
@@ -39,3 +42,14 @@ describe "ag-transaction.PreparedTransaction", ->
     it "runs a transaction with a value from the given function", ->
       PreparedTransaction.step(-> 'value').run((t) -> t.done).should.eventually.equal 'value'
 
+    it "guarantees that the transaction step is ran after the run handler", ->
+      startTransaction = sinon.stub().returns 'value'
+      PreparedTransaction
+        .step(startTransaction)
+        .run((t) ->
+          startTransaction.should.not.have.been.called
+          t.done
+        )
+        .then (v) ->
+          startTransaction.should.have.been.called
+          v.should.equal 'value'
