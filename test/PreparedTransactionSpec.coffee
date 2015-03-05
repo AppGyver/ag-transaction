@@ -56,6 +56,26 @@ describe "ag-transaction.PreparedTransaction", ->
           v.should.equal 'value'
 
   describe "instance", ->
+    describe "run()", ->
+      it "is a function", ->
+        PreparedTransaction.empty.run.should.be.a 'function'
+
+      it "accepts a function that receives a TransactionHandle", (done) ->
+        PreparedTransaction.empty.run (th) ->
+          done asserting ->
+            th.should.be.an 'object'
+            th.should.have.property('done').be.an.instanceof Promise
+
+      it "returns the asynchronous value from the passed function", ->
+        PreparedTransaction.empty.run(-> 'value')
+          .should.eventually.equal 'value'
+
+      it "allows the passed function to rely on done for the return value", ->
+        PreparedTransaction.empty.run((th) ->
+          th.done.then ->
+            'value'
+        ).should.eventually.equal 'value'
+
     describe "flatMapDone()", ->
       it "is a function", ->
         PreparedTransaction.empty.flatMapDone.should.be.a 'function'
