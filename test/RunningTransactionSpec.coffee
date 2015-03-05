@@ -10,6 +10,9 @@ asserting = require './asserting'
 Promise = require 'bluebird'
 RunningTransaction = require('../src/running-transaction')(Promise)
 
+never = new Promise (resolve, reject) ->
+  # Never resolve or reject
+
 describe "ag-transaction.RunningTransaction", ->
   it "is a class", ->
     RunningTransaction.should.be.a 'function'
@@ -72,7 +75,7 @@ describe "ag-transaction.RunningTransaction", ->
         .rollback()
         .should.be.rejected
 
-      it "is not run if the transaction does not complete", (done) ->
+      it "is not run if the transaction did fail", (done) ->
         rollback = sinon.stub()
         new RunningTransaction(
           done: Promise.reject()
@@ -98,3 +101,34 @@ describe "ag-transaction.RunningTransaction", ->
         )
         .rollback()
         .should.eventually.equal 'value'
+
+    describe 'abort()', ->
+      it "is a function", ->
+        RunningTransaction.empty.abort.should.be.a 'function'
+
+      it "returns a rejection by default", ->
+        RunningTransaction.empty.abort().should.be.rejected
+
+      it "returns a rejection if the transaction did complete", ->
+        new RunningTransaction(
+          done: Promise.resolve()
+          abort: ->
+        )
+        .abort()
+        .should.be.rejected
+
+      it "returns a rejection if the transaction did fail", ->
+        t = new RunningTransaction(
+          done: Promise.reject()
+          abort: ->
+        )
+        t.done.should.be.rejected
+        t.abort().should.be.rejected
+
+      it "can be enabled by initializing with an abort function", ->
+        new RunningTransaction(
+          done: never
+          abort: ->
+        )
+        .abort()
+        .should.be.fulfilled
