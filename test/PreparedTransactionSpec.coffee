@@ -66,7 +66,7 @@ describe "ag-transaction.PreparedTransaction", ->
           transactions.rollback('value')
         )
         .rollback()
-        .should.eventually.equal 'value'
+        .should.be.fulfilled
 
       it "rejects if the transaction's rollback rejects", ->
         new PreparedTransaction(->
@@ -89,4 +89,47 @@ describe "ag-transaction.PreparedTransaction", ->
           .flatMapDone(PreparedTransaction.unit)
           .done
           .should.eventually.equal 'value'
+
+      describe "rollback()", ->
+
+        it "combines rollbacks", ->
+          new PreparedTransaction(->
+            transactions.rollback 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.rollback 'two'
+          )
+          .rollback()
+          .should.be.fulfilled
+
+        it "combines rollbacks with their corresponding inputs", ->
+          new PreparedTransaction(->
+            transactions.rollback 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.rollback 'two'
+          )
+          .rollback()
+          .should.eventually.equal 'one rolled back'
+
+        it "combines rollbacks in reverse sequence", ->
+          one = sinon.stub().returns 'one rolled back'
+          two = sinon.stub().returns 'two rolled back'
+          new PreparedTransaction(->
+            new Transaction {
+              done: Promise.resolve()
+              rollback: one
+            }
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              new Transaction {
+                done: Promise.resolve()
+                rollback: two
+              }
+          )
+          .rollback()
+          .then ->
+            two.should.have.been.calledOnce
+            one.should.have.been.calledOnce
+
 

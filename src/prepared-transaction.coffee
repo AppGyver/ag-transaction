@@ -43,14 +43,19 @@ module.exports = (Promise, Transaction) ->
 
     done: null
     rollback: null
+    abort: null
 
     ###
     flatMapDone: (f: (a) -> PreparedTransaction b) -> PreparedTransaction b
     ###
     flatMapDone: (f) ->
       new PreparedTransaction =>
-        @done.then (a) ->
+
+        @done.then (a) =>
           tb = f(a)
           new Transaction {
             done: tb.done
+            rollback: =>
+              tb.rollback().then =>
+                @rollback()
           }

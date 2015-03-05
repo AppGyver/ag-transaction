@@ -10,8 +10,12 @@ module.exports = (Promise, Transaction) ->
 
   rollback = (value) ->
     new Transaction {
-      done: Promise.resolve()
-      rollback: -> value
+      done: Promise.resolve value
+      rollback: (v) ->
+        if v is value
+          Promise.resolve "#{value} rolled back"
+        else
+          Promise reject new Error "Did not get expected value #{value} as rollback argument"
     }
 
   {
