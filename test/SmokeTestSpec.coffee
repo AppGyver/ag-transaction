@@ -1,6 +1,7 @@
 require('chai').should()
-global.Promise = require 'bluebird'
+Promise = require 'bluebird'
+Transaction = require('../src')(Promise)
 
 describe "ag-transaction root", ->
   it "should be defined", ->
-    require('../src').should.exist
+    Transaction.should.exist
