@@ -64,3 +64,9 @@ describe "ag-transaction.PreparedTransaction", ->
           .flatMapDone(PreparedTransaction.unit)
           .should.be.an.instanceof PreparedTransaction
 
+      it "should have PreparedTransaction.unit as identity", ->
+        PreparedTransaction.unit('value')
+          .flatMapDone(PreparedTransaction.unit)
+          .run((t) -> t.done)
+          .should.eventually.equal 'value'
+
