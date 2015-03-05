@@ -17,6 +17,10 @@ module.exports = (Promise, RunningTransaction) ->
     @empty: new PreparedTransaction (f) ->
       f RunningTransaction.empty
 
+    @unit: (v) ->
+      new PreparedTransaction (f) ->
+        Promise.resolve(RunningTransaction.unit v).then(f)
+
     ###
     run :: (f: (RunningTransaction a) -> (b | Promise b)) -> Promise b
     ###
