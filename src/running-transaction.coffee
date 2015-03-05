@@ -1,9 +1,9 @@
 
 module.exports = (Promise) ->
   ###
-  RunningTransaction a :: {
-    retry: () -> Promise
-    abort: () -> Promise
+  RunningTransaction a b :: {
+    rollback: () -> Promise b
+    abort: () -> Promise b
     done: Promise a
   }
   ###
@@ -19,10 +19,13 @@ module.exports = (Promise) ->
 
     done: null
 
-    retry: ->
+    rollback: ->
       alert 'TODO'
+      Promise.reject()
+
     abort: ->
       alert 'TODO'
+      Promise.reject()
 
     ###
     f: (a -> RunningTransaction b) -> RunningTransaction b

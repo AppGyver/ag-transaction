@@ -1,3 +1,10 @@
+###
+Transaction a :: {
+  done: Promise a
+  retry: () -> Promise
+  abort: () -> Promise
+}
+###
 
 module.exports = (Promise, RunningTransaction) ->
   ###
@@ -30,7 +37,7 @@ module.exports = (Promise, RunningTransaction) ->
           }
 
     ###
-    run :: (f: (RunningTransaction a) -> (b | Promise b)) -> Promise b
+    run :: (f: (Transaction a) -> (b | Promise b)) -> Promise b
     ###
     run: -> throw new Error 'not implemented'
 
