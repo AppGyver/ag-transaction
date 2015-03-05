@@ -147,47 +147,24 @@ describe "ag-transaction.PreparedTransaction", ->
 
       describe "abort()", ->
 
-        it "combines aborts", ->
+        it "aborts an ongoing transaction when there is one", ->
           new PreparedTransaction(->
             transactions.abort 'one'
           ).flatMapDone(->
             new PreparedTransaction ->
-              transactions.abort 'two'
+              Transaction.empty
           )
           .abort()
           .should.eventually.equal 'one aborted'
 
-        it "combines aborts in reverse sequence", ->
-          one = sinon.stub().returns 'one aborted'
-          two = sinon.stub().returns 'two aborted'
-          new PreparedTransaction(->
-            new Transaction {
-              done: transactions.never
-              abort: one
-            }
+        it "leaves the PreparedTransaction in a rollbackable state", ->
+
+          t = new PreparedTransaction(->
+            transactions.rollback 'one'
           ).flatMapDone(->
             new PreparedTransaction ->
-              new Transaction {
-                done: transactions.never
-                abort: two
-              }
+              transactions.abort 'two'
           )
-          .abort()
-          .then ->
-            two.should.have.been.calledOnce
-            one.should.have.been.calledOnce
 
-        it "halts on the first abort that cannot be completed", ->
-          new PreparedTransaction(->
-            transactions.abort 'one'
-          ).flatMapDone(->
-            new PreparedTransaction ->
-              transactions.failsAbort 'two fails'
-          ).flatMapDone(->
-            new PreparedTransaction ->
-              transactions.abort 'three'
-          )
-          .abort()
-          .should.be.rejectedWith 'two fails'
-
-
+          t.abort().then ->
+            t.rollback().should.be.fulfilled()
