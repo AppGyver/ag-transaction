@@ -9,7 +9,7 @@ asserting = require './asserting'
 
 Promise = require 'bluebird'
 Transaction = require('../src/transaction')(Promise)
-PreparedTransaction = require('../src/prepared-transaction')(Promise)
+PreparedTransaction = require('../src/prepared-transaction')(Promise, Transaction)
 TransactionRunner = require('../src/transaction-runner')(Promise, Transaction, PreparedTransaction)
 
 describe "ag-transaction.TransactionRunner", ->

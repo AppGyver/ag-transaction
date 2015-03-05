@@ -9,7 +9,7 @@ asserting = require './asserting'
 
 Promise = require 'bluebird'
 Transaction = require('../src/transaction')(Promise)
-PreparedTransaction = require('../src/prepared-transaction')(Promise)
+PreparedTransaction = require('../src/prepared-transaction')(Promise, Transaction)
 
 transactions = require('./transactions')(Promise, Transaction)
 
@@ -20,7 +20,7 @@ describe "ag-transaction.PreparedTransaction", ->
   it "is created with a start function that returns a Transaction", ->
     new PreparedTransaction(->
       Transaction.empty
-    ).should.include.keys ['done', 'retry']
+    ).should.include.keys ['done']
 
   it "guarantees that the start function is not called at construction", ->
     start = sinon.stub().returns Transaction.empty
@@ -45,7 +45,7 @@ describe "ag-transaction.PreparedTransaction", ->
         .done
         .should.be.rejected
 
-    describe 'abort', ->
+    describe 'abort()', ->
       it "resolves if the transaction's abort resolves", ->
         new PreparedTransaction(->
           transactions.abort('value')
@@ -60,4 +60,33 @@ describe "ag-transaction.PreparedTransaction", ->
         .abort()
         .should.be.rejected
 
+    describe 'rollback()', ->
+      it "resolves if the transaction's rollback resolves", ->
+        new PreparedTransaction(->
+          transactions.rollback('value')
+        )
+        .rollback()
+        .should.eventually.equal 'value'
+
+      it "rejects if the transaction's rollback rejects", ->
+        new PreparedTransaction(->
+          transactions.abort('value')
+        )
+        .rollback()
+        .should.be.rejected
+
+    describe "flatMapDone()", ->
+      it "is a function", ->
+        PreparedTransaction.empty.flatMapDone.should.be.a 'function'
+
+      it "accepts a function that returns a PreparedTransaction and returns a PreparedTransaction", ->
+        PreparedTransaction.empty.flatMapDone(->
+          PreparedTransaction.empty
+        ).should.be.an.instanceof PreparedTransaction
+
+      it "should have PreparedTransaction.unit as identity", ->
+        PreparedTransaction.unit('value')
+          .flatMapDone(PreparedTransaction.unit)
+          .done
+          .should.eventually.equal 'value'
 

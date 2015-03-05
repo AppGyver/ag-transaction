@@ -1,24 +1,32 @@
-module.exports = (Promise) ->
+module.exports = (Promise, Transaction) ->
   defer = require('./defer')(Promise)
 
   ###
   PreparedTransaction a :: {
     done: Promise a
-    retry: () -> Promise
+    rollback: () -> Promise
     abort: () -> Promise
   }
   ###
   class PreparedTransaction
+
+    @empty: new PreparedTransaction ->
+      Transaction.empty
+
+    @unit: (v) ->
+      new PreparedTransaction ->
+        Transaction.unit v
+
     ###
-    startEventually: Promise (() -> Transaction)
+    startEventually: Promise (() -> Transaction a)
     ###
     constructor: (startEventually) ->
       done = defer()
-      retry = defer()
+      rollback = defer()
       abort = defer()
 
       @done = done.promise
-      @retry = -> retry.promise.then (f) -> f()
+      @rollback = -> rollback.promise.then (f) -> f()
       @abort = -> abort.promise.then (f) -> f()
 
       Promise.resolve(startEventually)
@@ -28,11 +36,21 @@ module.exports = (Promise) ->
             done.resolve
             done.reject
           )
-          retry.resolve ->
-            Promise.reject new Error "TODO"
+
           abort.resolve t.abort
+          rollback.resolve t.rollback
         )
 
     done: null
-    retry: null
-    abort: null
+    rollback: null
+
+    ###
+    flatMapDone: (f: (a) -> PreparedTransaction b) -> PreparedTransaction b
+    ###
+    flatMapDone: (f) ->
+      new PreparedTransaction =>
+        @done.then (a) ->
+          tb = f(a)
+          new Transaction {
+            done: tb.done
+          }
