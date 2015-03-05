@@ -25,12 +25,10 @@ module.exports = (Promise) ->
     done: null
 
     rollback: ->
-      alert 'TODO'
-      Promise.reject()
+      Promise.reject new Error 'TODO'
 
     abort: ->
-      alert 'TODO'
-      Promise.reject()
+      Promise.reject new Error 'TODO'
 
     ###
     f: (a -> RunningTransaction b) -> RunningTransaction b
