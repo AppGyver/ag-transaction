@@ -132,4 +132,17 @@ describe "ag-transaction.PreparedTransaction", ->
             two.should.have.been.calledOnce
             one.should.have.been.calledOnce
 
+        it "halts on the first rollback that cannot be completed", ->
+          new PreparedTransaction(->
+            transactions.rollback 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.failsRollback 'two fails'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.rollback 'three'
+          )
+          .rollback()
+          .should.be.rejectedWith 'two fails'
+
 
