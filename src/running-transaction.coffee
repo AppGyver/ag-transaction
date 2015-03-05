@@ -1,13 +1,13 @@
 
 module.exports = (Promise) ->
-  rollbackIfCompleted = (done, rollback) -> ->
+  rollbackIfCompleted = (done, rollback) ->
     done.then(
       rollback
       ->
         Promise.reject new Error "Can't roll back a transaction that did not complete"
     )
 
-  abortUnlessCompleted = (done, abort) -> ->
+  abortUnlessCompleted = (done, abort) ->
     whenDidComplete = -> -> Promise.reject new Error "Can't abort a transaction that did complete"
 
     Promise.race([
@@ -40,10 +40,10 @@ module.exports = (Promise) ->
         else Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
 
       if rollback?
-        @rollback = rollbackIfCompleted @done, rollback
+        @rollback = => rollbackIfCompleted @done, rollback
 
       if abort?
-        @abort = abortUnlessCompleted @done, abort
+        @abort = => abortUnlessCompleted @done, abort
 
     ###
     Signal transaction completion; no longer abortable, but might be rollbackable
