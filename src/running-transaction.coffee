@@ -8,7 +8,7 @@ module.exports = (Promise) ->
   }
   ###
   class RunningTransaction
-    @Empty: new RunningTransaction {
+    @empty: new RunningTransaction {
       done: Promise.resolve()
     }
 
