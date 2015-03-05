@@ -128,7 +128,7 @@ describe "ag-transaction.RunningTransaction", ->
       it "can be enabled by initializing with an abort function", ->
         new RunningTransaction(
           done: never
-          abort: ->
+          abort: -> 'value'
         )
         .abort()
-        .should.be.fulfilled
+        .should.eventually.equal 'value'
