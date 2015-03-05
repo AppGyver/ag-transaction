@@ -1,12 +1,53 @@
-###
-Transaction a :: {
-  done: Promise a
-  retry: () -> Promise
-  abort: () -> Promise
-}
-###
 
 module.exports = (Promise, RunningTransaction) ->
+  defer = ->
+    deferred = {
+      promise: null
+      resolve: null
+      reject: null
+    }
+
+    deferred.promise = new Promise (resolve, reject) ->
+      deferred.resolve = resolve
+      deferred.reject = reject
+
+    deferred
+
+  ###
+  TransactionHandle a :: {
+    done: Promise a
+    retry: () -> Promise
+    abort: () -> Promise
+  }
+  ###
+  class TransactionHandle
+    ###
+    startEventually: Promise (() -> RunningTransaction)
+    ###
+    constructor: (startEventually) ->
+      done = defer()
+      retry = defer()
+      abort = defer()
+
+      @done = done.promise
+      @retry = -> retry.promise.then (f) -> f()
+      @abort = -> abort.promise.then (f) -> f()
+
+      Promise.resolve(startEventually).then (start) ->
+        t = start()
+        t.done.then(
+          done.resolve
+          done.reject
+        )
+        retry.resolve ->
+          Promise.reject new Error "TODO"
+        abort.resolve ->
+          Promise.reject new Error "TODO"
+
+    done: null
+    retry: null
+    abort: null
+
   ###
   PreparedTransaction a :: {
     run :: (f: (RunningTransaction a) -> (b | Promise b)) -> Promise b
@@ -14,26 +55,31 @@ module.exports = (Promise, RunningTransaction) ->
   ###
   class PreparedTransaction
 
-    @empty: new PreparedTransaction (f) ->
-      f RunningTransaction.empty
+    @empty: new PreparedTransaction ->
+      RunningTransaction.empty
 
     @unit: (v) ->
-      new PreparedTransaction (f) ->
-        Promise.resolve(RunningTransaction.unit v).then(f)
+      new PreparedTransaction ->
+        RunningTransaction.unit v
 
     ###
     PreparedTransaction.step :: (f: () -> Promise a) -> PreparedTransaction a
     ###
     @step: (start) ->
-      new PreparedTransaction (f) ->
-        Promise.resolve(new RunningTransaction {
+      new PreparedTransaction ->
+        new RunningTransaction {
           done: start()
-        }).then(f)
+        }
 
     ###
-    run :: (f: (RunningTransaction a) -> (b | Promise b)) -> Promise b
+    start :: () -> RunningTransaction a
     ###
-    constructor: (@run) ->
+    constructor: (start) ->
+      ###
+      g: (TransactionHandle a) -> (b | Promise b)
+      ###
+      @run = (g) ->
+        g new TransactionHandle start
 
     ###
     (f: (a) -> PreparedTransaction b) -> PreparedTransaction b
@@ -53,6 +99,6 @@ module.exports = (Promise, RunningTransaction) ->
           }
 
     ###
-    run :: (f: (Transaction a) -> (b | Promise b)) -> Promise b
+    run :: (f: (TransactionHandle a) -> (b | Promise b)) -> Promise b
     ###
     run: -> throw new Error 'not implemented'

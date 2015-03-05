@@ -19,7 +19,7 @@ module.exports = (Promise) ->
 
     constructor: ({ done }) ->
       @done = switch done?
-        when true then done
+        when true then Promise.resolve done
         else Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
 
     done: null
