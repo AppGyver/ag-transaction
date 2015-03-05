@@ -131,3 +131,12 @@ describe "ag-transaction.Transaction", ->
         )
         .abort()
         .should.eventually.equal 'value'
+
+      it "short-circuits done to reject", ->
+        t = new Transaction(
+          done: never
+          abort: ->
+        )
+        t.abort().then ->
+          t.done.should.be.rejected
+
