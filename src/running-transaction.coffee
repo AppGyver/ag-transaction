@@ -17,18 +17,27 @@ module.exports = (Promise) ->
         done: Promise.resolve v
       }
 
-    constructor: ({ done }) ->
+    constructor: ({ done } = {}) ->
       @done = switch done?
         when true then Promise.resolve done
         else Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
 
+    ###
+    Signal transaction completion; no longer abortable, but might be rollbackable
+    ###
     done: null
 
+    ###
+    Attempt to undo transaction if it's complete
+    ###
     rollback: ->
-      Promise.reject new Error 'TODO'
+      Promise.reject new Error 'RunningTransaction did not declare a rollback instruction'
 
+    ###
+    Attempt to signal transaction abortion if it's in progress
+    ###
     abort: ->
-      Promise.reject new Error 'TODO'
+      Promise.reject new Error 'RunningTransaction did not declare an abort instruction'
 
     ###
     f: (a -> RunningTransaction b) -> RunningTransaction b

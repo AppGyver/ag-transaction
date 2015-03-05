@@ -49,3 +49,21 @@ describe "ag-transaction.RunningTransaction", ->
           done asserting ->
             v.should.equal 'value'
           RunningTransaction.empty
+
+    describe "done", ->
+      it "is a rejection by default", ->
+        (new RunningTransaction).done.should.be.rejected
+
+    describe "rollback()", ->
+      it "is a function", ->
+        RunningTransaction.empty.rollback.should.be.a 'function'
+
+      it "returns a rejection by default", ->
+        RunningTransaction.empty.rollback().should.be.rejected
+
+      it "can be enabled by initializing with a rollback function", ->
+        new RunningTransaction(
+          rollback: -> 'success!'
+        )
+        .rollback()
+        .should.eventually.equal 'success!'
