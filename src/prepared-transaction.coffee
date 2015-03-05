@@ -14,6 +14,9 @@ module.exports = (Promise, RunningTransaction) ->
   ###
   class PreparedTransaction
 
+    @empty: new PreparedTransaction (f) ->
+      f RunningTransaction.empty
+
     ###
     run :: (f: (RunningTransaction a) -> (b | Promise b)) -> Promise b
     ###

@@ -11,3 +11,11 @@ PreparedTransaction = require('../src/prepared-transaction')(Promise, RunningTra
 describe "ag-transaction.PreparedTransaction", ->
   it "is a class", ->
     PreparedTransaction.should.be.a 'function'
+
+  describe "empty", ->
+    it "is a PreparedTransaction", ->
+      PreparedTransaction.empty.should.be.an.instanceof PreparedTransaction
+
+    it "runs with an empty transaction", ->
+      PreparedTransaction.empty.run((t) -> t.done).should.be.fulfilled
+
