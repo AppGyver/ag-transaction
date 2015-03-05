@@ -17,10 +17,18 @@ module.exports = (Promise) ->
         done: Promise.resolve v
       }
 
-    constructor: ({ done } = {}) ->
+    constructor: ({ done, rollback } = {}) ->
       @done = switch done?
         when true then Promise.resolve done
         else Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
+
+      if rollback?
+        @rollback = =>
+          @done.then(
+            rollback
+            ->
+              Promise.reject new Error "Can't roll back a transaction that did not complete"
+          )
 
     ###
     Signal transaction completion; no longer abortable, but might be rollbackable

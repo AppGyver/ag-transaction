@@ -1,6 +1,9 @@
-chai = require('chai')
+chai = require 'chai'
+sinon = require 'sinon'
+
 chai.should()
 chai.use require 'chai-as-promised'
+chai.use require 'sinon-chai'
 
 asserting = require './asserting'
 
@@ -61,9 +64,37 @@ describe "ag-transaction.RunningTransaction", ->
       it "returns a rejection by default", ->
         RunningTransaction.empty.rollback().should.be.rejected
 
+      it "returns a rejection if the transaction does not complete", ->
+        new RunningTransaction(
+          done: Promise.reject()
+          rollback: ->
+        )
+        .rollback()
+        .should.be.rejected
+
+      it "is not run if the transaction does not complete", (done) ->
+        rollback = sinon.stub()
+        new RunningTransaction(
+          done: Promise.reject()
+          rollback: rollback
+        )
+        .rollback()
+        .error ->
+          done asserting ->
+            rollback.should.not.have.been.called
+
       it "can be enabled by initializing with a rollback function", ->
         new RunningTransaction(
+          done: Promise.resolve()
           rollback: -> 'success!'
         )
         .rollback()
         .should.eventually.equal 'success!'
+
+      it "receives the value from done", ->
+        new RunningTransaction(
+          done: Promise.resolve 'value'
+          rollback: (v) -> v
+        )
+        .rollback()
+        .should.eventually.equal 'value'
