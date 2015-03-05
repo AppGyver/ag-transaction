@@ -53,3 +53,14 @@ describe "ag-transaction.PreparedTransaction", ->
         .then (v) ->
           startTransaction.should.have.been.called
           v.should.equal 'value'
+
+  describe "instance", ->
+    describe "flatMapDone", ->
+      it "is a function", ->
+        PreparedTransaction.empty.flatMapDone.should.be.a 'function'
+
+      it "accepts a function that must return a PreparedTransaction and returns a PreparedTransaction", ->
+        PreparedTransaction.unit('value')
+          .flatMapDone(PreparedTransaction.unit)
+          .should.be.an.instanceof PreparedTransaction
+
