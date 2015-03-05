@@ -19,7 +19,7 @@ describe "ag-transaction.PreparedTransaction", ->
     it "runs an empty transaction", ->
       PreparedTransaction.empty.run((t) -> t.done).should.be.fulfilled
 
-  describe "unit", ->
+  describe "unit()", ->
     it "is a function", ->
       PreparedTransaction.unit.should.be.a 'function'
 
@@ -28,3 +28,14 @@ describe "ag-transaction.PreparedTransaction", ->
 
     it "runs a transaction with the given value", ->
       PreparedTransaction.unit('value').run((t) -> t.done).should.eventually.equal 'value'
+
+  describe "step()", ->
+    it "is a function", ->
+      PreparedTransaction.step.should.be.a 'function'
+
+    it "accepts a function and returns a PreparedTransaction", ->
+      PreparedTransaction.step(->).should.be.an.instanceof PreparedTransaction
+
+    it "runs a transaction with a value from the given function", ->
+      PreparedTransaction.step(-> 'value').run((t) -> t.done).should.eventually.equal 'value'
+

@@ -22,6 +22,15 @@ module.exports = (Promise, RunningTransaction) ->
         Promise.resolve(RunningTransaction.unit v).then(f)
 
     ###
+    PreparedTransaction.step :: (f: () -> Promise a) -> PreparedTransaction a
+    ###
+    @step: (start) ->
+      new PreparedTransaction (f) ->
+        Promise.resolve(new RunningTransaction {
+          done: start()
+        }).then(f)
+
+    ###
     run :: (f: (RunningTransaction a) -> (b | Promise b)) -> Promise b
     ###
     constructor: (@run) ->
@@ -47,12 +56,3 @@ module.exports = (Promise, RunningTransaction) ->
     run :: (f: (Transaction a) -> (b | Promise b)) -> Promise b
     ###
     run: -> throw new Error 'not implemented'
-
-    ###
-    PreparedTransaction.Step :: (f: () -> Promise a) -> PreparedTransaction a
-    ###
-    @Step: (start) ->
-      new PreparedTransaction (f) ->
-        Promise.resolve(new RunningTransaction {
-          done: start()
-        }).then(f)
