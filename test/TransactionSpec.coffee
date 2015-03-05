@@ -125,18 +125,18 @@ describe "ag-transaction.Transaction", ->
         t.abort().should.be.rejected
 
       it "can be enabled by initializing with an abort function", ->
-        new Transaction(
+        t = new Transaction(
           done: never
           abort: -> 'value'
         )
-        .abort()
-        .should.eventually.equal 'value'
+        t.abort().should.eventually.equal 'value'
 
-      it "short-circuits done to reject", ->
+      it "short-circuits done to reject", (done) ->
         t = new Transaction(
           done: never
           abort: ->
         )
         t.abort().then ->
-          t.done.should.be.rejected
+          done asserting ->
+            t.done.should.be.rejectedWith 'aborted'
 

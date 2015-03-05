@@ -46,12 +46,14 @@ describe "ag-transaction.PreparedTransaction", ->
         .should.be.rejected
 
     describe 'abort()', ->
-      it "resolves if the transaction's abort resolves", ->
-        new PreparedTransaction(->
+      it "resolves if the transaction's abort resolves", (done) ->
+        t = new PreparedTransaction(->
           transactions.abort('value')
         )
-        .abort()
-        .should.eventually.equal 'value aborted'
+        t.abort().then (v) ->
+          done asserting ->
+            v.should.equal 'value aborted'
+            t.done.should.be.rejected
 
       it "rejects if the transaction's abort rejects", ->
         new PreparedTransaction(->
