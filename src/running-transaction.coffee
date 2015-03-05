@@ -18,17 +18,23 @@ module.exports = (Promise) ->
     )
 
   ###
-  RunningTransaction a b :: {
-    rollback: () -> Promise b
-    abort: () -> Promise b
+  RunningTransaction a :: {
+    rollback: () -> Promise
+    abort: () -> Promise
     done: Promise a
   }
   ###
   class RunningTransaction
+    ###
+    RunningTransaction null
+    ###
     @empty: new RunningTransaction {
       done: Promise.resolve()
     }
 
+    ###
+    (a) -> RunningTransaction a
+    ###
     @unit: (v) ->
       new RunningTransaction {
         done: Promise.resolve v
