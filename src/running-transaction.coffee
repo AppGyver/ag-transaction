@@ -1,4 +1,3 @@
-
 module.exports = (Promise) ->
   rollbackIfCompleted = (done, rollback) ->
     done.then(

@@ -9,7 +9,8 @@ asserting = require './asserting'
 
 Promise = require 'bluebird'
 RunningTransaction = require('../src/running-transaction')(Promise)
-PreparedTransaction = require('../src/prepared-transaction')(Promise, RunningTransaction)
+TransactionHandle = require('../src/transaction-handle')(Promise)
+PreparedTransaction = require('../src/prepared-transaction')(Promise, RunningTransaction, TransactionHandle)
 
 describe "ag-transaction.PreparedTransaction", ->
   it "is a class", ->
