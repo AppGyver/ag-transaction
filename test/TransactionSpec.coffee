@@ -8,67 +8,67 @@ chai.use require 'sinon-chai'
 asserting = require './asserting'
 
 Promise = require 'bluebird'
-RunningTransaction = require('../src/running-transaction')(Promise)
+Transaction = require('../src/transaction')(Promise)
 
 never = new Promise (resolve, reject) ->
   # Never resolve or reject
 
-describe "ag-transaction.RunningTransaction", ->
+describe "ag-transaction.Transaction", ->
   it "is a class", ->
-    RunningTransaction.should.be.a 'function'
+    Transaction.should.be.a 'function'
 
   describe "empty", ->
-    it "is a RunningTransaction", ->
-      RunningTransaction.empty.should.be.an.instanceof RunningTransaction
+    it "is a Transaction", ->
+      Transaction.empty.should.be.an.instanceof Transaction
 
     it "is always done", ->
-      RunningTransaction.empty.done.should.be.fulfilled
+      Transaction.empty.done.should.be.fulfilled
 
   describe "unit()", ->
     it "is a function", ->
-      RunningTransaction.unit.should.be.a 'function'
+      Transaction.unit.should.be.a 'function'
 
-    it "returns a RunningTransaction", ->
-      RunningTransaction.unit('value').should.be.an.instanceof RunningTransaction
+    it "returns a Transaction", ->
+      Transaction.unit('value').should.be.an.instanceof Transaction
 
     it "is done with the value passed", ->
-      RunningTransaction.unit('value').done.should.eventually.equal 'value'
+      Transaction.unit('value').done.should.eventually.equal 'value'
 
   describe "instance", ->
     describe "flatMapDone()", ->
       it "is a function", ->
-        RunningTransaction.empty.flatMapDone.should.be.a 'function'
+        Transaction.empty.flatMapDone.should.be.a 'function'
 
-      it "accepts a function that must return a RunningTransaction and returns a RunningTransaction", ->
-        RunningTransaction.unit('value')
-          .flatMapDone(RunningTransaction.unit)
-          .should.be.an.instanceof RunningTransaction
+      it "accepts a function that must return a Transaction and returns a Transaction", ->
+        Transaction.unit('value')
+          .flatMapDone(Transaction.unit)
+          .should.be.an.instanceof Transaction
 
-      it "should have RunningTransaction.unit as identity", ->
-        RunningTransaction.unit('value')
-          .flatMapDone(RunningTransaction.unit)
+      it "should have Transaction.unit as identity", ->
+        Transaction.unit('value')
+          .flatMapDone(Transaction.unit)
           .done
           .should.eventually.equal 'value'
 
       it "receives a value from the transaction's done", (done) ->
-        RunningTransaction.unit('value').flatMapDone (v) ->
+        Transaction.unit('value').flatMapDone (v) ->
           done asserting ->
             v.should.equal 'value'
-          RunningTransaction.empty
+          Transaction.empty
 
     describe "done", ->
       it "is a rejection by default", ->
-        (new RunningTransaction).done.should.be.rejected
+        (new Transaction).done.should.be.rejected
 
     describe "rollback()", ->
       it "is a function", ->
-        RunningTransaction.empty.rollback.should.be.a 'function'
+        Transaction.empty.rollback.should.be.a 'function'
 
       it "returns a rejection by default", ->
-        RunningTransaction.empty.rollback().should.be.rejected
+        Transaction.empty.rollback().should.be.rejected
 
       it "returns a rejection if the transaction does not complete", ->
-        new RunningTransaction(
+        new Transaction(
           done: Promise.reject()
           rollback: ->
         )
@@ -77,7 +77,7 @@ describe "ag-transaction.RunningTransaction", ->
 
       it "is not run if the transaction did fail", (done) ->
         rollback = sinon.stub()
-        new RunningTransaction(
+        new Transaction(
           done: Promise.reject()
           rollback: rollback
         )
@@ -87,7 +87,7 @@ describe "ag-transaction.RunningTransaction", ->
             rollback.should.not.have.been.called
 
       it "can be enabled by initializing with a rollback function", ->
-        new RunningTransaction(
+        new Transaction(
           done: Promise.resolve()
           rollback: -> 'success!'
         )
@@ -95,7 +95,7 @@ describe "ag-transaction.RunningTransaction", ->
         .should.eventually.equal 'success!'
 
       it "receives the value from done", ->
-        new RunningTransaction(
+        new Transaction(
           done: Promise.resolve 'value'
           rollback: (v) -> v
         )
@@ -104,13 +104,13 @@ describe "ag-transaction.RunningTransaction", ->
 
     describe 'abort()', ->
       it "is a function", ->
-        RunningTransaction.empty.abort.should.be.a 'function'
+        Transaction.empty.abort.should.be.a 'function'
 
       it "returns a rejection by default", ->
-        RunningTransaction.empty.abort().should.be.rejected
+        Transaction.empty.abort().should.be.rejected
 
       it "returns a rejection if the transaction did complete", ->
-        new RunningTransaction(
+        new Transaction(
           done: Promise.resolve()
           abort: ->
         )
@@ -118,7 +118,7 @@ describe "ag-transaction.RunningTransaction", ->
         .should.be.rejected
 
       it "returns a rejection if the transaction did fail", ->
-        t = new RunningTransaction(
+        t = new Transaction(
           done: Promise.reject()
           abort: ->
         )
@@ -126,7 +126,7 @@ describe "ag-transaction.RunningTransaction", ->
         t.abort().should.be.rejected
 
       it "can be enabled by initializing with an abort function", ->
-        new RunningTransaction(
+        new Transaction(
           done: never
           abort: -> 'value'
         )

@@ -1,6 +1,6 @@
 
 module.exports = (Promise) ->
-  RunningTransaction = require('./running-transaction')(Promise)
-  TransactionHandle = require('./transaction-handle')(Promise)
-  PreparedTransaction = require('./prepared-transaction')(Promise, RunningTransaction, TransactionHandle)
-  return PreparedTransaction
+  Transaction = require('./transaction')(Promise)
+  PreparedTransaction = require('./prepared-transaction')(Promise)
+  TransactionRunner = require('./transaction-runner')(Promise, Transaction, PreparedTransaction)
+  return TransactionRunner

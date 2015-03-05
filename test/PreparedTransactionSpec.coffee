@@ -8,86 +8,38 @@ chai.use require 'sinon-chai'
 asserting = require './asserting'
 
 Promise = require 'bluebird'
-RunningTransaction = require('../src/running-transaction')(Promise)
-TransactionHandle = require('../src/transaction-handle')(Promise)
-PreparedTransaction = require('../src/prepared-transaction')(Promise, RunningTransaction, TransactionHandle)
+Transaction = require('../src/transaction')(Promise)
+PreparedTransaction = require('../src/prepared-transaction')(Promise)
 
 describe "ag-transaction.PreparedTransaction", ->
   it "is a class", ->
     PreparedTransaction.should.be.a 'function'
 
-  describe "empty", ->
-    it "is a PreparedTransaction", ->
-      PreparedTransaction.empty.should.be.an.instanceof PreparedTransaction
+  it "is created with a start function that returns a Transaction", ->
+    new PreparedTransaction(->
+      Transaction.empty
+    ).should.include.keys ['done', 'retry']
 
-    it "runs an empty transaction", ->
-      PreparedTransaction.empty.run((t) -> t.done).should.be.fulfilled
+  it "guarantees that the start function is not called at construction", ->
+    start = sinon.stub().returns Transaction.empty
+    new PreparedTransaction(start)
+    start.should.not.have.been.called
 
-  describe "unit()", ->
-    it "is a function", ->
-      PreparedTransaction.unit.should.be.a 'function'
-
-    it "returns a PreparedTransaction", ->
-      PreparedTransaction.unit('value').should.be.an.instanceof PreparedTransaction
-
-    it "runs a transaction with the given value", ->
-      PreparedTransaction.unit('value').run((t) -> t.done).should.eventually.equal 'value'
-
-  describe "step()", ->
-    it "is a function", ->
-      PreparedTransaction.step.should.be.a 'function'
-
-    it "accepts a function and returns a PreparedTransaction", ->
-      PreparedTransaction.step(->).should.be.an.instanceof PreparedTransaction
-
-    it "runs a transaction with a value from the given function", ->
-      PreparedTransaction.step(-> 'value').run((t) -> t.done).should.eventually.equal 'value'
-
-    it "guarantees that the transaction step is ran after the run handler", ->
-      startTransaction = sinon.stub().returns 'value'
-      PreparedTransaction
-        .step(startTransaction)
-        .run((t) ->
-          startTransaction.should.not.have.been.called
-          t.done
+  describe 'instance', ->
+    describe 'done', ->
+      it "yields the done from the transaction when it succeeds", ->
+        new PreparedTransaction(->
+          Transaction.unit 'value'
         )
-        .then (v) ->
-          startTransaction.should.have.been.called
-          v.should.equal 'value'
+        .done
+        .should.eventually.equal 'value'
 
-  describe "instance", ->
-    describe "run()", ->
-      it "is a function", ->
-        PreparedTransaction.empty.run.should.be.a 'function'
-
-      it "accepts a function that receives a TransactionHandle", (done) ->
-        PreparedTransaction.empty.run (th) ->
-          done asserting ->
-            th.should.be.an 'object'
-            th.should.have.property('done').be.an.instanceof Promise
-
-      it "returns the asynchronous value from the passed function", ->
-        PreparedTransaction.empty.run(-> 'value')
-          .should.eventually.equal 'value'
-
-      it "allows the passed function to rely on done for the return value", ->
-        PreparedTransaction.empty.run((th) ->
-          th.done.then ->
-            'value'
-        ).should.eventually.equal 'value'
-
-    describe "flatMapDone()", ->
-      it "is a function", ->
-        PreparedTransaction.empty.flatMapDone.should.be.a 'function'
-
-      it "accepts a function that must return a PreparedTransaction and returns a PreparedTransaction", ->
-        PreparedTransaction.unit('value')
-          .flatMapDone(PreparedTransaction.unit)
-          .should.be.an.instanceof PreparedTransaction
-
-      it "should have PreparedTransaction.unit as identity", ->
-        PreparedTransaction.unit('value')
-          .flatMapDone(PreparedTransaction.unit)
-          .run((t) -> t.done)
-          .should.eventually.equal 'value'
+      it "yields the done from the transaction when it fails", ->
+        new PreparedTransaction(->
+          new Transaction {
+            done: Promise.reject()
+          }
+        )
+        .done
+        .should.be.rejected
 

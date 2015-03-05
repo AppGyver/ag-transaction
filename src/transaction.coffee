@@ -17,32 +17,32 @@ module.exports = (Promise) ->
     )
 
   ###
-  RunningTransaction a :: {
+  Transaction a :: {
     rollback: () -> Promise
     abort: () -> Promise
     done: Promise a
   }
   ###
-  class RunningTransaction
+  class Transaction
     ###
-    RunningTransaction null
+    Transaction null
     ###
-    @empty: new RunningTransaction {
+    @empty: new Transaction {
       done: Promise.resolve()
     }
 
     ###
-    (a) -> RunningTransaction a
+    (a) -> Transaction a
     ###
     @unit: (v) ->
-      new RunningTransaction {
+      new Transaction {
         done: Promise.resolve v
       }
 
     constructor: ({ done, rollback, abort } = {}) ->
       @done = switch done?
         when true then Promise.resolve done
-        else Promise.reject new Error "RunningTransaction did not declare a 'done' condition"
+        else Promise.reject new Error "Transaction did not declare a 'done' condition"
 
       if rollback?
         @rollback = => rollbackIfCompleted @done, rollback
@@ -59,20 +59,20 @@ module.exports = (Promise) ->
     Attempt to undo transaction if it's complete
     ###
     rollback: ->
-      Promise.reject new Error 'RunningTransaction did not declare a rollback instruction'
+      Promise.reject new Error 'Transaction did not declare a rollback instruction'
 
     ###
     Attempt to signal transaction abortion if it's in progress
     ###
     abort: ->
-      Promise.reject new Error 'RunningTransaction did not declare an abort instruction'
+      Promise.reject new Error 'Transaction did not declare an abort instruction'
 
     ###
-    f: (a -> RunningTransaction b) -> RunningTransaction b
+    f: (a -> Transaction b) -> Transaction b
     ###
     flatMapDone: (f) ->
       next = @done.then f
 
-      new RunningTransaction {
+      new Transaction {
         done: next.then (t) -> t.done
       }
