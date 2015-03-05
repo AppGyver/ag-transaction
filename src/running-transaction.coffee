@@ -12,6 +12,11 @@ module.exports = (Promise) ->
       done: Promise.resolve()
     }
 
+    @unit: (v) ->
+      new RunningTransaction {
+        done: Promise.resolve v
+      }
+
     constructor: ({ done }) ->
       @done = switch done?
         when true then done
