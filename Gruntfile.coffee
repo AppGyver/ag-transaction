@@ -7,7 +7,7 @@ module.exports = (grunt) ->
       test: 'test'
     files:
       src: '<%= dir.src %>/**/*.coffee'
-      test: '<%= dir.test %>/**/*Spec.coffee'
+      test: '<%= dir.test %>/**/*.coffee'
   }
 
   require('load-grunt-config')(grunt, {
