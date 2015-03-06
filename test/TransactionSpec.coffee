@@ -10,7 +10,8 @@ asserting = require './asserting'
 Promise = require 'bluebird'
 Transaction = require('../src/transaction')(Promise)
 
-{ never } = require('./transactions')(Promise, Transaction)
+transactions = require('./transactions')(Promise, Transaction)
+{ never } = transactions
 
 describe "ag-transaction.Transaction", ->
   it "is a class", ->
@@ -34,26 +35,6 @@ describe "ag-transaction.Transaction", ->
       Transaction.unit('value').done.should.eventually.equal 'value'
 
   describe "instance", ->
-    describe "flatMapDone()", ->
-      it "is a function", ->
-        Transaction.empty.flatMapDone.should.be.a 'function'
-
-      it "accepts a function that must return a Transaction and returns a Transaction", ->
-        Transaction.unit('value')
-          .flatMapDone(Transaction.unit)
-          .should.be.an.instanceof Transaction
-
-      it "should have Transaction.unit as identity", ->
-        Transaction.unit('value')
-          .flatMapDone(Transaction.unit)
-          .done
-          .should.eventually.equal 'value'
-
-      it "receives a value from the transaction's done", (done) ->
-        Transaction.unit('value').flatMapDone (v) ->
-          done asserting ->
-            v.should.equal 'value'
-          Transaction.empty
 
     describe "done", ->
       it "is a rejection by default", ->
@@ -140,3 +121,83 @@ describe "ag-transaction.Transaction", ->
           done asserting ->
             t.done.should.be.rejectedWith 'aborted'
 
+    describe "flatMapDone()", ->
+      it "is a function", ->
+        Transaction.empty.flatMapDone.should.be.a 'function'
+
+      it "accepts a function that must return a Transaction and returns a Transaction", ->
+        Transaction.unit('value')
+          .flatMapDone(Transaction.unit)
+          .should.be.an.instanceof Transaction
+
+      it "should have Transaction.unit as identity", ->
+        Transaction.unit('value')
+          .flatMapDone(Transaction.unit)
+          .done
+          .should.eventually.equal 'value'
+
+      it "receives a value from the transaction's done", (done) ->
+        Transaction.unit('value').flatMapDone (v) ->
+          done asserting ->
+            v.should.equal 'value'
+          Transaction.empty
+
+      describe "rollback()", ->
+
+        it "combines rollbacks with their corresponding inputs", ->
+          transactions
+            .rollback('one')
+            .flatMapDone ->
+              transactions.rollback('two')
+            .rollback()
+            .should.eventually.equal 'one rolled back'
+
+        it "combines rollbacks in reverse sequence", ->
+          one = sinon.stub().returns 'one rolled back'
+          two = sinon.stub().returns 'two rolled back'
+          new Transaction({
+              done: Promise.resolve()
+              rollback: one
+          }).flatMapDone(->
+            new Transaction {
+              done: Promise.resolve()
+              rollback: two
+            }
+          )
+          .rollback()
+          .then ->
+            two.should.have.been.calledOnce
+            one.should.have.been.calledOnce
+
+        it "halts on the first rollback that cannot be completed", ->
+          transactions.rollback('one')
+            .flatMapDone ->
+              transactions.failsRollback 'two fails'
+            .flatMapDone ->
+              transactions.rollback 'three'
+            .rollback()
+            .should.be.rejectedWith 'two fails'
+
+      describe.skip "abort()", ->
+
+        it "aborts an ongoing transaction when there is one", ->
+          new PreparedTransaction(->
+            transactions.abort 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              Transaction.empty
+          )
+          .abort()
+          .should.eventually.equal 'one aborted'
+
+        it "leaves the PreparedTransaction in a rollbackable state", ->
+
+          t = new PreparedTransaction(->
+            transactions.rollback 'one'
+          ).flatMapDone(->
+            new PreparedTransaction ->
+              transactions.abort 'two'
+          )
+
+          t.abort().then ->
+            t.rollback().should.be.fulfilled()

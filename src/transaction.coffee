@@ -83,4 +83,8 @@ module.exports = (Promise) ->
 
       new Transaction {
         done: next.then (t) -> t.done
+        rollback: =>
+          next.then (tb) =>
+            tb.rollback().then =>
+              @rollback()
       }
