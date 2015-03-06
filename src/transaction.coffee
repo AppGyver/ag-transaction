@@ -35,10 +35,32 @@ module.exports = (Promise) ->
   }
   ###
   class Transaction
+    @create: ({ done, rollback, abort } = {}) ->
+      t = {
+        done: null
+        rollback: null
+        abort: null
+      }
+
+      dfd = defer()
+      t.done = dfd.promise
+
+      switch done?
+        when true then Promise.resolve(done).then dfd.resolve, dfd.reject
+        else dfd.reject new Error "Transaction did not declare a 'done' condition"
+
+      if rollback?
+        t.rollback = => rollbackIfCompleted t.done, rollback
+
+      if abort?
+        t.abort = => abortAndRejectUnlessCompleted t.done, abort, dfd.reject
+
+      new Transaction t
+
     ###
     Transaction null
     ###
-    @empty: new Transaction {
+    @empty: Transaction.create {
       done: Promise.resolve()
     }
 
@@ -46,23 +68,17 @@ module.exports = (Promise) ->
     (a) -> Transaction a
     ###
     @unit: (v) ->
-      new Transaction {
+      Transaction.create {
         done: Promise.resolve v
       }
 
-    constructor: ({ done, rollback, abort } = {}) ->
-      dfd = defer()
-      @done = dfd.promise
+    constructor: ({ done, rollback, abort} = {}) ->
+      @done = switch done?
+        when true then done
+        else Promise.reject new Error "Transaction did not declare a 'done' condition"
 
-      switch done?
-        when true then Promise.resolve(done).then dfd.resolve, dfd.reject
-        else dfd.reject new Error "Transaction did not declare a 'done' condition"
-
-      if rollback?
-        @rollback = => rollbackIfCompleted @done, rollback
-
-      if abort?
-        @abort = => abortAndRejectUnlessCompleted @done, abort, dfd.reject
+      @rollback = rollback if rollback?
+      @abort = abort if abort?
 
     ###
     Signal transaction completion; no longer abortable, but might be rollbackable
@@ -86,13 +102,19 @@ module.exports = (Promise) ->
     ###
     flatMapDone: (f) ->
       next = @done.then f
+      nextDone = next.then (t) -> t.done
 
       new Transaction {
-        done: next.then (t) -> t.done
+        done: nextDone
         rollback: =>
-          next.then (tb) =>
-            tb.rollback().then =>
-              @rollback()
+          # TODO: we never get here because the constructor detects we've failed
+          nextDone.then(
+            =>
+              next.value().rollback().then =>
+                @rollback()
+            @rollback
+          )
+
         abort: =>
           ifCompleted @done,
             ->

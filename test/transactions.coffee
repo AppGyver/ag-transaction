@@ -3,13 +3,13 @@ module.exports = (Promise, Transaction) ->
     # Never resolve or reject
 
   abort = (value) ->
-    new Transaction {
+    Transaction.create {
       done: never
       abort: -> Promise.resolve "#{value} aborted"
     }
 
   rollback = (value) ->
-    new Transaction {
+    Transaction.create {
       done: Promise.resolve value
       rollback: (v) ->
         if v is value
@@ -19,7 +19,7 @@ module.exports = (Promise, Transaction) ->
     }
 
   failsRollback = (message) ->
-    new Transaction {
+    Transaction.create {
       done: Promise.resolve()
       rollback: ->
         Promise.reject new Error message

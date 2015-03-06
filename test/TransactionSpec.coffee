@@ -38,7 +38,7 @@ describe "ag-transaction.Transaction", ->
 
     describe "done", ->
       it "is a rejection by default", ->
-        (new Transaction).done.should.be.rejected
+        Transaction.create().done.should.be.rejected
 
     describe "rollback()", ->
       it "is a function", ->
@@ -48,7 +48,7 @@ describe "ag-transaction.Transaction", ->
         Transaction.empty.rollback().should.be.rejected
 
       it "returns a rejection if the transaction does not complete", ->
-        new Transaction(
+        Transaction.create(
           done: Promise.reject()
           rollback: ->
         )
@@ -57,7 +57,7 @@ describe "ag-transaction.Transaction", ->
 
       it "is not run if the transaction did fail", (done) ->
         rollback = sinon.stub()
-        new Transaction(
+        Transaction.create(
           done: Promise.reject()
           rollback: rollback
         )
@@ -67,7 +67,7 @@ describe "ag-transaction.Transaction", ->
             rollback.should.not.have.been.called
 
       it "can be enabled by initializing with a rollback function", ->
-        new Transaction(
+        Transaction.create(
           done: Promise.resolve()
           rollback: -> 'success!'
         )
@@ -75,7 +75,7 @@ describe "ag-transaction.Transaction", ->
         .should.eventually.equal 'success!'
 
       it "receives the value from done", ->
-        new Transaction(
+        Transaction.create(
           done: Promise.resolve 'value'
           rollback: (v) -> v
         )
@@ -90,7 +90,7 @@ describe "ag-transaction.Transaction", ->
         Transaction.empty.abort().should.be.rejected
 
       it "returns a rejection if the transaction did complete", ->
-        new Transaction(
+        Transaction.create(
           done: Promise.resolve()
           abort: ->
         )
@@ -98,7 +98,7 @@ describe "ag-transaction.Transaction", ->
         .should.be.rejected
 
       it "returns a rejection if the transaction did fail", ->
-        t = new Transaction(
+        t = Transaction.create(
           done: Promise.reject()
           abort: ->
         )
@@ -106,14 +106,14 @@ describe "ag-transaction.Transaction", ->
         t.abort().should.be.rejected
 
       it "can be enabled by initializing with an abort function", ->
-        t = new Transaction(
+        t = Transaction.create(
           done: never
           abort: -> 'value'
         )
         t.abort().should.eventually.equal 'value'
 
       it "short-circuits done to reject", (done) ->
-        t = new Transaction(
+        t = Transaction.create(
           done: never
           abort: ->
         )
@@ -155,11 +155,11 @@ describe "ag-transaction.Transaction", ->
         it "combines rollbacks in reverse sequence", ->
           one = sinon.stub().returns 'one rolled back'
           two = sinon.stub().returns 'two rolled back'
-          new Transaction({
+          Transaction.create({
               done: Promise.resolve()
               rollback: one
           }).flatMapDone(->
-            new Transaction {
+            Transaction.create {
               done: Promise.resolve()
               rollback: two
             }

@@ -38,7 +38,7 @@ describe "ag-transaction.PreparedTransaction", ->
 
       it "yields the done from the transaction when it fails", ->
         new PreparedTransaction(->
-          new Transaction {
+          Transaction.create {
             done: Promise.reject()
           }
         )
@@ -118,13 +118,13 @@ describe "ag-transaction.PreparedTransaction", ->
           one = sinon.stub().returns 'one rolled back'
           two = sinon.stub().returns 'two rolled back'
           new PreparedTransaction(->
-            new Transaction {
+            Transaction.create {
               done: Promise.resolve()
               rollback: one
             }
           ).flatMapDone(->
             new PreparedTransaction ->
-              new Transaction {
+              Transaction.create {
                 done: Promise.resolve()
                 rollback: two
               }

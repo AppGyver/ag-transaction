@@ -19,7 +19,7 @@ module.exports = (Promise, Transaction, TransactionHandle) ->
     ###
     @step: (start) ->
       new TransactionRunner ->
-        new Transaction {
+        Transaction.create {
           done: start()
         }
 
@@ -44,7 +44,7 @@ module.exports = (Promise, Transaction, TransactionHandle) ->
         @run (ta) ->
           ta.done.then (a) ->
             f(a).run (tb) ->
-              new Transaction {
+              Transaction.create {
                 done: tb.done
               }
 

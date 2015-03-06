@@ -53,7 +53,7 @@ module.exports = (Promise, Transaction) ->
 
         @done.then (a) =>
           tb = f(a)
-          new Transaction {
+          Transaction.create {
             done: tb.done
             rollback: =>
               tb.rollback().then =>
