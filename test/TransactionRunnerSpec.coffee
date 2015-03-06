@@ -116,3 +116,58 @@ describe "ag-transaction.TransactionRunner", ->
           .run((t) -> t.done)
           .should.eventually.equal 'value'
 
+      describe "rollback()", ->
+        it "combines rollbacks", ->
+          TransactionRunner
+            .step ({rollback}) ->
+              rollback ->
+                'one rolled back'
+              Promise.resolve()
+            .flatMapDone ->
+              TransactionRunner.step ({rollback}) ->
+                rollback ->
+                  'two rolled back'
+                Promise.resolve()
+            .run((t) ->
+              t.rollback()
+            )
+            .should.eventually.equal 'one rolled back'
+
+        it "combines rollbacks in reverse sequence", ->
+          one = sinon.stub().returns 'one rolled back'
+          two = sinon.stub().returns 'two rolled back'
+          TransactionRunner
+            .step ({rollback}) ->
+              rollback one
+              Promise.resolve()
+            .flatMapDone ->
+              TransactionRunner.step ({rollback}) ->
+                rollback two
+                Promise.resolve()
+            .run((t) ->
+              t.rollback()
+            )
+            .then ->
+              two.should.have.been.calledOnce
+              one.should.have.been.calledOnce
+
+        it "halts on the first rollback that cannot be completed", ->
+          TransactionRunner
+            .step ({rollback}) ->
+              rollback ->
+                'one'
+              Promise.resolve()
+            .flatMapDone ->
+              TransactionRunner.step ({rollback}) ->
+                rollback ->
+                  Promise.reject new Error 'two fails'
+                Promise.resolve()
+            .flatMapDone ->
+              TransactionRunner.step ({rollback}) ->
+                rollback ->
+                  'three'
+                Promise.resolve()
+            .run((t) ->
+              t.rollback()
+            )
+            .should.be.rejectedWith 'two fails'

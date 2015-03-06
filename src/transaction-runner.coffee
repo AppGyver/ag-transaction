@@ -36,15 +36,13 @@ module.exports = (Promise, Transaction, PreparedTransaction) ->
     ###
     flatMapDone: (f) ->
       new TransactionRunner =>
-        ###
-        Promise (Transaction b)
-        ###
         @run (ta) ->
-          ta.done.then (a) ->
-            f(a).run (tb) ->
-              Transaction.create {
-                done: tb.done
-              }
+          ta.flatMapDone (a) ->
+            PreparedTransaction.fromCreator ({ abort, rollback }) ->
+              f(a).run (tb) ->
+                abort tb.abort
+                rollback tb.rollback
+                tb.done
 
     ###
     run :: (f: (PreparedTransaction a) -> (b | Promise b)) -> Promise b
