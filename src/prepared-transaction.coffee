@@ -10,6 +10,22 @@ module.exports = (Promise, Transaction) ->
   ###
   class PreparedTransaction
 
+    ###
+    fromCreator :: (f: ({ done, rollback, abort }) -> ()) -> Transaction
+    ###
+    @fromCreator: (f) ->
+      t = {
+        done: null
+        rollback: null
+        abort: null
+      }
+      new PreparedTransaction ->
+        t.done = Promise.resolve(f {
+          rollback: (v) -> t.rollback = v
+          abort: (v) -> t.abort = v
+        })
+        t
+
     @empty: new PreparedTransaction ->
       Transaction.empty
 

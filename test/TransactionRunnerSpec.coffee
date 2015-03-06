@@ -12,6 +12,8 @@ Transaction = require('../src/transaction')(Promise)
 PreparedTransaction = require('../src/prepared-transaction')(Promise, Transaction)
 TransactionRunner = require('../src/transaction-runner')(Promise, Transaction, PreparedTransaction)
 
+transactions = require('./transactions')(Promise, Transaction)
+
 describe "ag-transaction.TransactionRunner", ->
   it "is a class", ->
     TransactionRunner.should.be.a 'function'
@@ -54,6 +56,28 @@ describe "ag-transaction.TransactionRunner", ->
         .then (v) ->
           startTransaction.should.have.been.called
           v.should.equal 'value'
+
+    describe "arguments to function", ->
+      it "provides abort for defining abort handler", ->
+        TransactionRunner
+          .step ({abort}) ->
+            abort ->
+              'aborted'
+            transactions.never
+          .run (t) ->
+            t.abort()
+          .should.eventually.equal 'aborted'
+
+      it.skip "provides rollback for defining rollback handler", ->
+        TransactionRunner
+          .step ({rollback}) ->
+            rollback (v) ->
+              "rolled back #{v}"
+            Promise.resolve 'value'
+          .run (t) ->
+            t.done.then ->
+              t.rollback()
+          .should.eventually.equal 'rolled back value'
 
   describe "instance", ->
     describe "run()", ->

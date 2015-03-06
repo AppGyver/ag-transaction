@@ -1,4 +1,4 @@
-module.exports = (Promise, Transaction, TransactionHandle) ->
+module.exports = (Promise, Transaction, PreparedTransaction) ->
 
   ###
   TransactionRunner a :: {
@@ -15,23 +15,21 @@ module.exports = (Promise, Transaction, TransactionHandle) ->
         Transaction.unit v
 
     ###
-    TransactionRunner.step :: (f: () -> Promise a) -> TransactionRunner a
+    TransactionRunner.step :: (f: ({ rollback, abort }) -> Promise a) -> TransactionRunner a
     ###
-    @step: (start) ->
+    @step: (creator) ->
       new TransactionRunner ->
-        Transaction.create {
-          done: start()
-        }
+        PreparedTransaction.fromCreator creator
 
     ###
     start :: (() -> Transaction a) | Promise (() -> Transaction a)
     ###
     constructor: (start) ->
       ###
-      g: (TransactionHandle a) -> (b | Promise b)
+      g: (PreparedTransaction a) -> (b | Promise b)
       ###
       @run = (g) ->
-        Promise.resolve(g new TransactionHandle start)
+        Promise.resolve(g new PreparedTransaction start)
 
     ###
     (f: (a) -> TransactionRunner b) -> TransactionRunner b
@@ -49,6 +47,6 @@ module.exports = (Promise, Transaction, TransactionHandle) ->
               }
 
     ###
-    run :: (f: (TransactionHandle a) -> (b | Promise b)) -> Promise b
+    run :: (f: (PreparedTransaction a) -> (b | Promise b)) -> Promise b
     ###
     run: -> throw new Error 'not implemented'
