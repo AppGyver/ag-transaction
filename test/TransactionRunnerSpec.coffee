@@ -171,3 +171,36 @@ describe "ag-transaction.TransactionRunner", ->
               t.rollback()
             )
             .should.be.rejectedWith 'two fails'
+
+      describe "abort()", ->
+
+        it "aborts an ongoing transaction when there is one", ->
+          TransactionRunner
+            .step ({abort}) ->
+              abort ->
+                'one aborted'
+              transactions.never
+            .flatMapDone ->
+              TransactionRunner.empty
+            .run (t) ->
+              t.done.should.be.rejected
+              t.abort()
+            .should.eventually.equal 'one aborted'
+
+        it "leaves the transaction in a rollbackable state", ->
+          TransactionRunner
+            .step ({rollback}) ->
+              rollback ->
+                'one rolled back'
+              Promise.resolve()
+            .flatMapDone ->
+              TransactionRunner.step ({abort}) ->
+                abort ->
+                  'two aborted'
+                transactions.never
+            .run (t) ->
+              t.done.should.be.rejected
+              t.abort().then ->
+                t.rollback()
+            .should.eventually.equal 'one rolled back'
+
