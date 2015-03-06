@@ -187,14 +187,10 @@ describe "ag-transaction.Transaction", ->
             .abort()
             .should.eventually.equal 'one aborted'
 
-        it.skip "leaves the PreparedTransaction in a rollbackable state", ->
-
-          t = new PreparedTransaction(->
-            transactions.rollback 'one'
-          ).flatMapDone(->
-            new PreparedTransaction ->
+        it "leaves the transaction in a rollbackable state", ->
+          t = transactions.rollback('one')
+            .flatMapDone ->
               transactions.abort 'two'
-          )
 
-          t.abort().then ->
-            t.rollback().should.be.fulfilled()
+          t.abort().should.be.fulfilled.and.notify ->
+            t.rollback().should.be.fulfilled
