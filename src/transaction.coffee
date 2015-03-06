@@ -50,10 +50,10 @@ module.exports = (Promise) ->
         else dfd.reject new Error "Transaction did not declare a 'done' condition"
 
       if rollback?
-        t.rollback = => rollbackIfCompleted t.done, rollback
+        t.rollback = -> rollbackIfCompleted t.done, rollback
 
       if abort?
-        t.abort = => abortAndRejectUnlessCompleted t.done, abort, dfd.reject
+        t.abort = -> abortAndRejectUnlessCompleted t.done, abort, dfd.reject
 
       new Transaction t
 
