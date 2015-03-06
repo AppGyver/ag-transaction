@@ -107,7 +107,6 @@ module.exports = (Promise) ->
       new Transaction {
         done: nextDone
         rollback: =>
-          # TODO: we never get here because the constructor detects we've failed
           nextDone.then(
             =>
               next.value().rollback().then =>

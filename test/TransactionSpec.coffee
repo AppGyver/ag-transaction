@@ -181,11 +181,12 @@ describe "ag-transaction.Transaction", ->
       describe "abort()", ->
 
         it "aborts an ongoing transaction when there is one", ->
-          transactions.abort('one')
+          t = transactions.abort('one')
             .flatMapDone ->
               Transaction.empty
-            .abort()
-            .should.eventually.equal 'one aborted'
+
+          t.done.should.be.rejected
+          t.abort().should.eventually.equal 'one aborted'
 
         it "leaves the transaction in a rollbackable state", ->
           t = transactions.rollback('one')
