@@ -178,19 +178,16 @@ describe "ag-transaction.Transaction", ->
             .rollback()
             .should.be.rejectedWith 'two fails'
 
-      describe.skip "abort()", ->
+      describe "abort()", ->
 
         it "aborts an ongoing transaction when there is one", ->
-          new PreparedTransaction(->
-            transactions.abort 'one'
-          ).flatMapDone(->
-            new PreparedTransaction ->
+          transactions.abort('one')
+            .flatMapDone ->
               Transaction.empty
-          )
-          .abort()
-          .should.eventually.equal 'one aborted'
+            .abort()
+            .should.eventually.equal 'one aborted'
 
-        it "leaves the PreparedTransaction in a rollbackable state", ->
+        it.skip "leaves the PreparedTransaction in a rollbackable state", ->
 
           t = new PreparedTransaction(->
             transactions.rollback 'one'
