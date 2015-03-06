@@ -192,5 +192,5 @@ describe "ag-transaction.Transaction", ->
             .flatMapDone ->
               transactions.abort 'two'
 
-          t.abort().should.be.fulfilled.and.notify ->
-            t.rollback().should.be.fulfilled
+          t.abort().then ->
+            t.rollback().should.eventually.equal 'one rolled back'
