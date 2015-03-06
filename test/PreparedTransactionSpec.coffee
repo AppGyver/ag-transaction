@@ -147,7 +147,7 @@ describe "ag-transaction.PreparedTransaction", ->
           .rollback()
           .should.be.rejectedWith 'two fails'
 
-      describe.skip "abort()", ->
+      describe "abort()", ->
 
         it "aborts an ongoing transaction when there is one", ->
           new PreparedTransaction(->
@@ -169,4 +169,4 @@ describe "ag-transaction.PreparedTransaction", ->
           )
 
           t.abort().then ->
-            t.rollback().should.be.fulfilled()
+            t.rollback().should.be.fulfilled
