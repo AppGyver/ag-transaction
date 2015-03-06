@@ -8,18 +8,24 @@ module.exports = (Promise) ->
         Promise.reject new Error "Can't roll back a transaction that did not complete"
     )
 
-  abortAndRejectUnlessCompleted = (done, abort, rejectDone) ->
-    whenDidComplete = -> -> Promise.reject new Error "Can't abort a transaction that did complete"
-    whenNotCompleted = ->
-      rejectDone(new Error 'Transaction aborted')
-      abort()
-
+  whenCompleted = (promise, thenDo, elseDo) ->
     Promise.race([
-      done.then(whenDidComplete, whenDidComplete)
-      Promise.resolve(whenNotCompleted).delay(0)
+      promise.then(
+        -> thenDo
+        -> thenDo
+      )
+      Promise.resolve(elseDo).delay(0)
     ]).then((choice) ->
       choice()
     )
+
+  abortAndRejectUnlessCompleted = (done, abort, rejectDone) ->
+    whenCompleted done,
+      ->
+        Promise.reject new Error "Can't abort a transaction that did complete"
+      ->
+        rejectDone(new Error 'Transaction aborted')
+        abort()
 
   ###
   Transaction a :: {
