@@ -24,7 +24,7 @@ module.exports = (Promise, Transaction) ->
           rollback: (v) -> t.rollback = v
           abort: (v) -> t.abort = v
         })
-        t
+        Transaction.create t
 
     @empty: new PreparedTransaction ->
       Transaction.empty

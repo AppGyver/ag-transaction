@@ -65,10 +65,11 @@ describe "ag-transaction.TransactionRunner", ->
               'aborted'
             transactions.never
           .run (t) ->
+            t.done.should.be.rejected
             t.abort()
           .should.eventually.equal 'aborted'
 
-      it.skip "provides rollback for defining rollback handler", ->
+      it "provides rollback for defining rollback handler", ->
         TransactionRunner
           .step ({rollback}) ->
             rollback (v) ->
