@@ -95,6 +95,8 @@ module.exports = (Promise) ->
               @rollback()
         abort: =>
           ifCompleted @done,
-            -> next.abort()
-            => @abort()
+            ->
+              next.then (tb) ->
+                tb.abort()
+            @abort
       }
