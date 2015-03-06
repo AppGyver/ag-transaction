@@ -8,11 +8,13 @@ ag-transaction
 
 Provides a type for asynchronous, rollbackable transactions with progress notifications
 
-## Prerequisites
+## Design document
+
+### Prerequisites
 
 Assuming a familiarity with [Bluebird](https://github.com/petkaantonov/bluebird/) Promises and [Bacon.js](https://github.com/baconjs/bacon.js/) Streams.
 
-## Use case
+### Use case
 
 Assume we have a multi-part asynchronous process.
 
@@ -28,7 +30,7 @@ In addition to what's already afforded by the Promise type, we would like to:
 
 This needs to be done such that the resulting API is as chainable as the original.
 
-## The `Transaction` type
+### The `Transaction` type
 
 The `Transaction` type is essentially a pair of `{ progress, done }`, where `progress` is a Stream of progress notifications and `done` is a Promise of the eventual result.
 
@@ -57,7 +59,7 @@ The full type is therefore:
       mapProgress: ((Stream p) -> (Stream q)) -> Transaction q d
     }
 
-## Creating a Transaction with `Transaction.step`
+### Creating a Transaction with `Transaction.step`
 
 Transaction.step is a function that allows us to lift `Promise`-yielding processes into `Transaction`.
 
@@ -102,7 +104,7 @@ We can also provide progress notifications. Ignoring the rollback instructions f
 
 The example provides a string as the notification, but it can be whatever the consumer should be able to process.
 
-## Chaining `Transaction` steps with `flatMapDone`
+### Chaining `Transaction` steps with `flatMapDone`
 
 Let's imagine we wanted to split the two asynchronous steps we had before.
 
@@ -133,7 +135,7 @@ We often want to perform a transaction as multiple sequential steps, where a ste
 
 In terms of our type it means we take a `Transaction`, add another step and get a bigger `Transaction` back. `flatMapDone` will take care to retain the rollback instructions and progress events for us.
 
-## Manipulating transaction `progress` with `mapProgress`
+### Manipulating transaction `progress` with `mapProgress`
 
 Basing on the previous example, events in `createFileVersion.progress` will be:
 
@@ -153,7 +155,7 @@ Resulting events in `progress` are:
 
 This becomes especially relevant if we wish to aggregate multiple parallel transactions.
 
-## Parallel transactions with `Transaction.all`
+### Parallel transactions with `Transaction.all`
 
 Careful observation reveals the `createFile` and `createFileVersion` steps do not in fact depend on each other. What we have instead are distinct steps we wish to execute in parallel.
 
