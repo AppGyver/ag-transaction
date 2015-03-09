@@ -195,3 +195,21 @@ describe "ag-transaction.Transaction", ->
 
           t.abort().then ->
             t.rollback().should.eventually.equal 'one rolled back'
+
+        it "ignores states that did not begin when rolling back", ->
+          three = sinon.stub().returns 'three rolled back'
+          t = transactions.rollback('one')
+            .flatMapDone ->
+              transactions.abort 'two'
+            .flatMapDone ->
+              Transaction.create {
+                done: Promise.resolve()
+                rollback: three
+              }
+
+          t.done.should.be.rejected
+          t.abort().then ->
+            t.rollback().then (v) ->
+              three.should.not.have.been.called
+              v.should.equal 'one rolled back'
+
