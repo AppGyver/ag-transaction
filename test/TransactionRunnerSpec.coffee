@@ -70,11 +70,7 @@ describe "ag-transaction.TransactionRunner", ->
           .should.eventually.equal 'aborted'
 
       it "provides rollback for defining rollback handler", ->
-        TransactionRunner
-          .step ({rollback}) ->
-            rollback (v) ->
-              "rolled back #{v}"
-            Promise.resolve 'value'
+        runners.rollsbackWith('rolled back value')
           .run (t) ->
             t.done.then ->
               t.rollback()
@@ -118,16 +114,9 @@ describe "ag-transaction.TransactionRunner", ->
 
       describe "rollback()", ->
         it "combines rollbacks", ->
-          TransactionRunner
-            .step ({rollback}) ->
-              rollback ->
-                'one rolled back'
-              Promise.resolve()
+          runners.rollsbackWith('one rolled back')
             .flatMapDone ->
-              TransactionRunner.step ({rollback}) ->
-                rollback ->
-                  'two rolled back'
-                Promise.resolve()
+              runners.rollsbackWith('two rolled back')
             .run((t) ->
               t.rollback()
             )
@@ -136,14 +125,9 @@ describe "ag-transaction.TransactionRunner", ->
         it "combines rollbacks in reverse sequence", ->
           one = sinon.stub().returns 'one rolled back'
           two = sinon.stub().returns 'two rolled back'
-          TransactionRunner
-            .step ({rollback}) ->
-              rollback one
-              Promise.resolve()
+          runners.rollsbackWith(one)
             .flatMapDone ->
-              TransactionRunner.step ({rollback}) ->
-                rollback two
-                Promise.resolve()
+              runners.rollsbackWith(two)
             .run((t) ->
               t.rollback()
             )
@@ -152,21 +136,14 @@ describe "ag-transaction.TransactionRunner", ->
               one.should.have.been.calledOnce
 
         it "halts on the first rollback that cannot be completed", ->
-          TransactionRunner
-            .step ({rollback}) ->
-              rollback ->
-                'one'
-              Promise.resolve()
+          runners.rollsbackWith('one')
             .flatMapDone ->
               TransactionRunner.step ({rollback}) ->
                 rollback ->
                   Promise.reject new Error 'two fails'
                 Promise.resolve()
             .flatMapDone ->
-              TransactionRunner.step ({rollback}) ->
-                rollback ->
-                  'three'
-                Promise.resolve()
+              runners.rollsbackWith 'three'
             .run((t) ->
               t.rollback()
             )
@@ -184,11 +161,7 @@ describe "ag-transaction.TransactionRunner", ->
             .should.eventually.equal 'one aborted'
 
         it "leaves the transaction in a rollbackable state", ->
-          TransactionRunner
-            .step ({rollback}) ->
-              rollback ->
-                'one rolled back'
-              Promise.resolve()
+          runners.rollsbackWith('one rolled back')
             .flatMapDone ->
               runners.abortsWith 'two aborted'
             .run (t) ->
