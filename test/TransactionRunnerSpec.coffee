@@ -13,6 +13,7 @@ PreparedTransaction = require('../src/prepared-transaction')(Promise, Transactio
 TransactionRunner = require('../src/transaction-runner')(Promise, Transaction, PreparedTransaction)
 
 transactions = require('./transactions')(Promise, Transaction)
+runners = require('./runners')(transactions, Promise, TransactionRunner)
 
 describe "ag-transaction.TransactionRunner", ->
   it "is a class", ->
@@ -62,11 +63,7 @@ describe "ag-transaction.TransactionRunner", ->
 
     describe "arguments to function", ->
       it "provides abort for defining abort handler", ->
-        TransactionRunner
-          .step ({abort}) ->
-            abort ->
-              'aborted'
-            transactions.never
+        runners.abortsWith('aborted')
           .run (t) ->
             t.done.should.be.rejected
             t.abort()
@@ -178,11 +175,7 @@ describe "ag-transaction.TransactionRunner", ->
       describe "abort()", ->
 
         it "aborts an ongoing transaction when there is one", ->
-          TransactionRunner
-            .step ({abort}) ->
-              abort ->
-                'one aborted'
-              transactions.never
+          runners.abortsWith('one aborted')
             .flatMapDone ->
               TransactionRunner.empty
             .run (t) ->
@@ -197,10 +190,7 @@ describe "ag-transaction.TransactionRunner", ->
                 'one rolled back'
               Promise.resolve()
             .flatMapDone ->
-              TransactionRunner.step ({abort}) ->
-                abort ->
-                  'two aborted'
-                transactions.never
+              runners.abortsWith 'two aborted'
             .run (t) ->
               t.done.should.be.rejected
               t.abort().then ->
