@@ -13,6 +13,9 @@ PreparedTransaction = require('../src/prepared-transaction')(Promise, Transactio
 
 transactions = require('./transactions')(Promise, Transaction)
 
+prepare = (f) ->
+  new PreparedTransaction f
+
 describe "ag-transaction.PreparedTransaction", ->
   it "is a class", ->
     PreparedTransaction.should.be.a 'function'
@@ -30,14 +33,14 @@ describe "ag-transaction.PreparedTransaction", ->
   describe 'instance', ->
     describe 'done', ->
       it "yields the done from the transaction when it succeeds", ->
-        new PreparedTransaction(->
+        prepare(->
           Transaction.unit 'value'
         )
         .done
         .should.eventually.equal 'value'
 
       it "yields the done from the transaction when it fails", ->
-        new PreparedTransaction(->
+        prepare(->
           Transaction.create {
             done: Promise.reject()
           }
@@ -47,7 +50,7 @@ describe "ag-transaction.PreparedTransaction", ->
 
     describe 'abort()', ->
       it "resolves if the transaction's abort resolves", (done) ->
-        t = new PreparedTransaction(->
+        t = prepare(->
           transactions.abort('value')
         )
         t.abort().then (v) ->
@@ -56,7 +59,7 @@ describe "ag-transaction.PreparedTransaction", ->
             t.done.should.be.rejected
 
       it "rejects if the transaction's abort rejects", ->
-        new PreparedTransaction(->
+        prepare(->
           Transaction.empty
         )
         .abort()
@@ -64,14 +67,14 @@ describe "ag-transaction.PreparedTransaction", ->
 
     describe 'rollback()', ->
       it "resolves if the transaction's rollback resolves", ->
-        new PreparedTransaction(->
+        prepare(->
           transactions.rollback('value')
         )
         .rollback()
         .should.be.fulfilled
 
       it "rejects if the transaction's rollback rejects", ->
-        new PreparedTransaction(->
+        prepare(->
           transactions.abort('value')
         )
         .rollback()
@@ -95,20 +98,20 @@ describe "ag-transaction.PreparedTransaction", ->
       describe "rollback()", ->
 
         it "combines rollbacks", ->
-          new PreparedTransaction(->
+          prepare(->
             transactions.rollback 'one'
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               transactions.rollback 'two'
           )
           .rollback()
           .should.be.fulfilled
 
         it "combines rollbacks with their corresponding inputs", ->
-          new PreparedTransaction(->
+          prepare(->
             transactions.rollback 'one'
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               transactions.rollback 'two'
           )
           .rollback()
@@ -117,13 +120,13 @@ describe "ag-transaction.PreparedTransaction", ->
         it "combines rollbacks in reverse sequence", ->
           one = sinon.stub().returns 'one rolled back'
           two = sinon.stub().returns 'two rolled back'
-          new PreparedTransaction(->
+          prepare(->
             Transaction.create {
               done: Promise.resolve()
               rollback: one
             }
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               Transaction.create {
                 done: Promise.resolve()
                 rollback: two
@@ -135,13 +138,13 @@ describe "ag-transaction.PreparedTransaction", ->
             one.should.have.been.calledOnce
 
         it "halts on the first rollback that cannot be completed", ->
-          new PreparedTransaction(->
+          prepare(->
             transactions.rollback 'one'
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               transactions.failsRollback 'two fails'
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               transactions.rollback 'three'
           )
           .rollback()
@@ -150,10 +153,10 @@ describe "ag-transaction.PreparedTransaction", ->
       describe "abort()", ->
 
         it "aborts an ongoing transaction when there is one", ->
-          t = new PreparedTransaction(->
+          t = prepare(->
             transactions.abort 'one'
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               Transaction.empty
           )
 
@@ -162,10 +165,10 @@ describe "ag-transaction.PreparedTransaction", ->
 
         it "leaves the PreparedTransaction in a rollbackable state", ->
 
-          t = new PreparedTransaction(->
+          t = prepare(->
             transactions.rollback 'one'
           ).flatMapDone(->
-            new PreparedTransaction ->
+            prepare ->
               transactions.abort 'two'
           )
 
