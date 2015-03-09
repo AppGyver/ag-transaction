@@ -23,17 +23,19 @@ describe "ag-transaction.TransactionRunner", ->
       TransactionRunner.empty.should.be.an.instanceof TransactionRunner
 
     it "runs an empty transaction", ->
-      TransactionRunner.empty.run((t) -> t.done).should.be.fulfilled
+      TransactionRunner.empty.run (t) ->
+        t.done.should.be.fulfilled
 
   describe "unit()", ->
     it "is a function", ->
       TransactionRunner.unit.should.be.a 'function'
 
     it "returns a TransactionRunner", ->
-      TransactionRunner.unit('value').should.be.an.instanceof TransactionRunner
+      TransactionRunner.unit().should.be.an.instanceof TransactionRunner
 
     it "runs a transaction with the given value", ->
-      TransactionRunner.unit('value').run((t) -> t.done).should.eventually.equal 'value'
+      TransactionRunner.unit('value').run (t) ->
+        t.done.should.eventually.equal 'value'
 
   describe "step()", ->
     it "is a function", ->
@@ -43,7 +45,8 @@ describe "ag-transaction.TransactionRunner", ->
       TransactionRunner.step(->).should.be.an.instanceof TransactionRunner
 
     it "runs a transaction with a value from the given function", ->
-      TransactionRunner.step(-> 'value').run((t) -> t.done).should.eventually.equal 'value'
+      TransactionRunner.step(-> 'value').run (t) ->
+        t.done.should.eventually.equal 'value'
 
     it "guarantees that the transaction step is ran after the run handler", ->
       startTransaction = sinon.stub().returns 'value'
