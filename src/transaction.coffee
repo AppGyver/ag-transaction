@@ -1,32 +1,4 @@
-module.exports = (Promise) ->
-  defer = require('./defer')(Promise)
-
-  rollbackIfCompleted = (done, rollback) ->
-    done.then(
-      rollback
-      ->
-        Promise.reject new Error "Can't roll back a transaction that did not complete"
-    )
-
-  ifCompleted = (promise, thenDo, elseDo) ->
-    Promise.race([
-      promise.then(
-        -> thenDo
-        -> thenDo
-      )
-      Promise.resolve(elseDo).delay(0)
-    ]).then((choice) ->
-      choice()
-    )
-
-  abortAndRejectUnlessCompleted = (done, abort, rejectDone) ->
-    ifCompleted done,
-      ->
-        Promise.reject new Error "Can't abort a transaction that did complete"
-      ->
-        rejectDone(new Error 'Transaction aborted')
-        abort()
-
+module.exports = (promises) ->
   ###
   Transaction a :: {
     rollback: () -> Promise
@@ -42,18 +14,18 @@ module.exports = (Promise) ->
         abort: null
       }
 
-      dfd = defer()
+      dfd = promises.defer()
       t.done = dfd.promise
 
       switch done?
-        when true then Promise.resolve(done).then dfd.resolve, dfd.reject
+        when true then promises.resolve(done).then dfd.resolve, dfd.reject
         else dfd.reject new Error "Transaction did not declare a 'done' condition"
 
       if rollback?
-        t.rollback = -> rollbackIfCompleted t.done, rollback
+        t.rollback = -> promises.rollbackIfCompleted t.done, rollback
 
       if abort?
-        t.abort = -> abortAndRejectUnlessCompleted t.done, abort, dfd.reject
+        t.abort = -> promises.abortAndRejectUnlessCompleted t.done, abort, dfd.reject
 
       new Transaction t
 
@@ -61,7 +33,7 @@ module.exports = (Promise) ->
     Transaction null
     ###
     @empty: Transaction.create {
-      done: Promise.resolve()
+      done: promises.resolve()
     }
 
     ###
@@ -69,13 +41,13 @@ module.exports = (Promise) ->
     ###
     @unit: (v) ->
       Transaction.create {
-        done: Promise.resolve v
+        done: promises.resolve v
       }
 
     constructor: ({ done, rollback, abort} = {}) ->
       @done = switch done?
         when true then done
-        else Promise.reject new Error "Transaction did not declare a 'done' condition"
+        else promises.reject new Error "Transaction did not declare a 'done' condition"
 
       @rollback = rollback if rollback?
       @abort = abort if abort?
@@ -89,13 +61,13 @@ module.exports = (Promise) ->
     Attempt to undo transaction if it's complete
     ###
     rollback: ->
-      Promise.reject new Error 'Transaction did not declare a rollback instruction'
+      promises.reject new Error 'Transaction did not declare a rollback instruction'
 
     ###
     Attempt to signal transaction abortion if it's in progress
     ###
     abort: ->
-      Promise.reject new Error 'Transaction did not declare an abort instruction'
+      promises.reject new Error 'Transaction did not declare an abort instruction'
 
     ###
     f: (a -> Transaction b) -> Transaction b
@@ -115,7 +87,7 @@ module.exports = (Promise) ->
           )
 
         abort: =>
-          ifCompleted @done,
+          promises.ifCompleted @done,
             ->
               next.then (tb) ->
                 tb.abort()

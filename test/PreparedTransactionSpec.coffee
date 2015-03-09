@@ -8,8 +8,9 @@ chai.use require 'sinon-chai'
 asserting = require './asserting'
 
 Promise = require 'bluebird'
-Transaction = require('../src/transaction')(Promise)
-PreparedTransaction = require('../src/prepared-transaction')(Promise, Transaction)
+promises = require('../src/promises')(Promise)
+Transaction = require('../src/transaction')(promises)
+PreparedTransaction = require('../src/prepared-transaction')(promises, Transaction)
 
 transactions = require('./transactions')(Promise, Transaction)
 

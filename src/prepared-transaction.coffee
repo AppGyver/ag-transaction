@@ -1,5 +1,4 @@
-module.exports = (Promise, Transaction) ->
-  defer = require('./defer')(Promise)
+module.exports = (promises, Transaction) ->
 
   ###
   PreparedTransaction a :: {
@@ -20,7 +19,7 @@ module.exports = (Promise, Transaction) ->
         abort: null
       }
       new PreparedTransaction ->
-        t.done = Promise.resolve(f {
+        t.done = promises.resolve(f {
           rollback: (v) -> t.rollback = v
           abort: (v) -> t.abort = v
         })
@@ -37,15 +36,15 @@ module.exports = (Promise, Transaction) ->
     startEventually: Promise (() -> Transaction a)
     ###
     constructor: (startEventually) ->
-      done = defer()
-      rollback = defer()
-      abort = defer()
+      done = promises.defer()
+      rollback = promises.defer()
+      abort = promises.defer()
 
       @done = done.promise
       @rollback = -> rollback.promise.then (f) -> f()
       @abort = -> abort.promise.then (f) -> f()
 
-      Promise.resolve(startEventually)
+      promises.resolve(startEventually)
         .then((start) -> start())
         .then((t) ->
           t.done.then(
@@ -67,6 +66,5 @@ module.exports = (Promise, Transaction) ->
     flatMapDone: (f) ->
       new PreparedTransaction =>
         Transaction.create(this).flatMapDone (a) ->
-          new PreparedTransaction ->
-            f(a)
+          Transaction.create(f(a))
 

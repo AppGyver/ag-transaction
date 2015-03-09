@@ -8,7 +8,8 @@ chai.use require 'sinon-chai'
 asserting = require './asserting'
 
 Promise = require 'bluebird'
-Transaction = require('../src/transaction')(Promise)
+promises = require('../src/promises')(Promise)
+Transaction = require('../src/transaction')(promises)
 
 transactions = require('./transactions')(Promise, Transaction)
 { never } = transactions
@@ -203,7 +204,7 @@ describe "ag-transaction.Transaction", ->
               transactions.abort 'two'
             .flatMapDone ->
               Transaction.create {
-                done: Promise.resolve()
+                done: transactions.never
                 rollback: three
               }
 
