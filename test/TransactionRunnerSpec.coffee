@@ -167,3 +167,16 @@ describe "ag-transaction.TransactionRunner", ->
                 t.rollback()
             .should.eventually.equal 'one rolled back'
 
+        it "ignores states that did not begin when rolling back", ->
+          three = sinon.stub().returns 'three rolled back'
+          runners.rollsbackWith('one rolled back')
+            .flatMapDone ->
+              runners.abortsWith 'two aborted'
+            .flatMapDone ->
+              runners.rollsbackWith three
+            .run (t) ->
+              t.done.should.be.rejected
+              t.abort().then ->
+                t.rollback().then (v) ->
+                  three.should.not.have.been.called
+                  v.should.equal 'one rolled back'
