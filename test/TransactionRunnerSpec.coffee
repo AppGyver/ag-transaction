@@ -138,10 +138,7 @@ describe "ag-transaction.TransactionRunner", ->
         it "halts on the first rollback that cannot be completed", ->
           runners.rollsbackWith('one')
             .flatMapDone ->
-              TransactionRunner.step ({rollback}) ->
-                rollback ->
-                  Promise.reject new Error 'two fails'
-                Promise.resolve()
+              runners.failsRollbackWith 'two fails'
             .flatMapDone ->
               runners.rollsbackWith 'three'
             .run((t) ->
