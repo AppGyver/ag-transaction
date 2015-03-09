@@ -175,3 +175,17 @@ describe "ag-transaction.PreparedTransaction", ->
           t.done.should.be.rejected
           t.abort().then ->
             t.rollback().should.be.fulfilled
+
+        it "ignores states that did not begin when rolling back", ->
+          t = prepare(->
+            transactions.rollback 'one'
+          ).flatMapDone(->
+            prepare ->
+              transactions.abort 'two'
+          ).flatMapDone(->
+            prepare ->
+              transactions.rollback 'three'
+          )
+          t.done.should.be.rejected
+          t.abort().then ->
+            t.rollback().should.be.fulfilled
