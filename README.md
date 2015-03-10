@@ -14,6 +14,42 @@ Provides a type for asynchronous, reversible transactions
 
     npm install ag-transaction
 
+### Creating and running transactions
+
+```coffeescript
+Transaction = require 'ag-transaction'
+
+# Build a transaction sequence step by step
+# This step is rollbackable but not abortable
+Transaction.step ({rollback}) ->
+    rollback (foo) ->
+      foo.delete()
+    # Returns a Promise Foo
+    createFoo()
+
+  # Combine with a next step
+  .flatMapDone (foo) ->
+    # This step is abortable
+    Transaction.step ({abort}) ->
+      # Returns { abort, done }
+      upload = startUpload foo
+      abort ->
+        upload.abort()
+      upload.done
+
+  # When we run the transaction we've built, we get a handle to the results
+  .run (t) ->
+    # done signals completion
+    t.done.then ->
+      alert 'All done with uploading Foo!'
+
+    # We can send a signal to abort the transaction
+    t.abort().then ->
+      # Let's also clean up after ourselves
+      t.rollback().then ->
+        alert "Didn't upload Foo"
+
+```
 
 ## Design document
 
