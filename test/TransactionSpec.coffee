@@ -192,7 +192,9 @@ describe "ag-transaction.Transaction", ->
         it "leaves the transaction in a rollbackable state", ->
           t = transactions.rollback('one')
             .flatMapDone ->
-              transactions.abort 'two'
+              transactions.rollback 'two'
+            .flatMapDone ->
+              transactions.abort 'three'
 
           t.abort().then ->
             t.rollback().should.eventually.equal 'one rolled back'
