@@ -1,4 +1,5 @@
 module.exports = (promises, Transaction) ->
+  noop = ->
 
   ###
   PreparedTransaction a :: {
@@ -39,10 +40,19 @@ module.exports = (promises, Transaction) ->
       done = promises.defer()
       rollback = promises.defer()
       abort = promises.defer()
+      aborted = promises.defer()
 
       @done = done.promise
-      @rollback = -> rollback.promise.then (f) -> f()
-      @abort = -> abort.promise.then (f) -> f()
+      @rollback = -> rollback.promise.then (f) ->
+        # Prevent rollback if aborted already.
+        # Why exactly do we need to do this?
+        # Will probably cause issues at some point.
+        promises.ifCompleted aborted.promise, noop, f
+
+      @abort = -> abort.promise.then (f) ->
+        # Signal abortion to trigger rollback latch above.
+        aborted.resolve()
+        f()
 
       promises.resolve(startEventually)
         .then((start) -> start())
