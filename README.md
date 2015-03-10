@@ -6,7 +6,14 @@ ag-transaction
 [![Dependency Status](http://img.shields.io/david/AppGyver/ag-transaction.svg)](https://david-dm.org/AppGyver/ag-transaction)
 [![Coverage Status](https://img.shields.io/coveralls/AppGyver/ag-transaction.svg)](https://coveralls.io/r/AppGyver/ag-transaction)
 
-Provides a type for asynchronous, rollbackable transactions with progress notifications
+Provides a type for asynchronous, reversible transactions
+
+## Usage
+
+### Installation
+
+    npm install ag-transaction
+
 
 ## Design document
 
