@@ -51,6 +51,40 @@ Transaction.step ({rollback}) ->
 
 ```
 
+### API signatures
+
+#### Transaction.step
+
+    Transaction.step :: (f: ({
+      abort: (() -> Promise) -> ()
+      rollback: ((a) -> Promise) -> ()
+    }) -> Promise a) -> TransactionRunner a
+
+Declare a transaction step.
+
+Accepts a function `f` that accepts functions for declaring `abort` and `rollback` instructions, and starts a process that returns a Promise of `a`.
+
+Returns a `TransactionRunner a` that will start the process after run.
+
+#### TransactionRunner
+
+    TransactionRunner a = {
+      flatMapDone: (f: (a) -> TransactionRunner b) -> TransactionRunner b
+      run: (f: (Transaction a) -> Promise b) -> Promise b
+    }
+
+Represents a step or steps to run to complete a transaction. Can be chained with other steps using `flatMapDone` or ran by calling `run`.
+
+#### Transaction
+
+    Transaction a = {
+      done: Promise a
+      abort: () -> Promise
+      rollback: () -> Promise
+    }
+
+A running process that can be instructed to `abort` until `done` has completed, in which case it can be instructed to `rollback`. The underlying process steps need to support these instructions in the specific phases of the process the transaction might be aborted or rolled back at.
+
 ## Design document
 
 ### Prerequisites
