@@ -40,27 +40,17 @@ module.exports = (promises, Transaction) ->
       done = promises.defer()
       rollback = promises.defer()
       abort = promises.defer()
-      aborted = promises.defer()
 
       @done = done.promise
-      @rollback = -> rollback.promise.then (f) ->
-        # Prevent rollback if aborted already.
-        # Why exactly do we need to do this?
-        # Will probably cause issues at some point.
-        promises.ifCompleted aborted.promise, noop, f
-
-      @abort = -> abort.promise.then (f) ->
-        # Signal abortion to trigger rollback latch above.
-        aborted.resolve()
-        f()
+      @rollback = -> rollback.promise.then (f) -> f()
+      @abort = -> abort.promise.then (f) -> f()
 
       promises.resolve(startEventually)
-        .then((start) -> start())
+        .then((start) ->
+          start()
+        )
         .then((t) ->
-          t.done.then(
-            done.resolve
-            done.reject
-          )
+          t.done.then(done.resolve, done.reject)
 
           abort.resolve t.abort
           rollback.resolve t.rollback
@@ -75,6 +65,20 @@ module.exports = (promises, Transaction) ->
     ###
     flatMapDone: (f) ->
       new PreparedTransaction =>
-        Transaction.create(this).flatMapDone (a) ->
-          Transaction.create(f(a))
+        # The promises in this are set up to take care of themselves, so new Transaction instead of Transaction.create
+        ta = new Transaction this
+        tb = ta.flatMapDone (a) ->
+          # The same goes for the output from f(a)
+          new Transaction f(a)
+
+        # We take the flatMapped Transaction and hook an aborted latch that will prevent the next rollback if we've aborted
+        aborted = promises.defer()
+        new Transaction {
+          done: tb.done
+          abort: ->
+            aborted.resolve()
+            tb.abort()
+          rollback: ->
+            promises.ifCompleted aborted.promise, ta.rollback, tb.rollback
+        }
 
