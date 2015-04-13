@@ -101,6 +101,11 @@ describe "ag-transaction.TransactionRunner", ->
         ).then (v) ->
           v is value
 
+      jsc.property "allows immediate abortion of the transaction", arbRunner, (runner) ->
+        runner.run (th) ->
+          th.abort().then ->
+            true
+
     describe "flatMapDone()", ->
       it "is a function", ->
         TransactionRunner.empty.flatMapDone.should.be.a 'function'
