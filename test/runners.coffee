@@ -29,16 +29,16 @@ module.exports = (transactions, Promise, TransactionRunner) ->
       rollback v
       Promise.resolve()
 
-  arbitrarySuccessfulRunner = jsc.oneof(
-    jsc.constant TransactionRunner.empty
-    jsc.bless generator: jsc.json.generator.map (json) ->
-      TransactionRunner.unit json
-    jsc.bless generator: jsc.json.generator.map (json) ->
-      TransactionRunner.unit Promise.resolve json
-    jsc.bless generator: jsc.json.generator.map (json) ->
+  simpleSuccessfulRunnerGen = jsc.generator.oneof [
+    jsc.unit.generator.map -> TransactionRunner.empty
+    jsc.json.generator.map (json) -> TransactionRunner.unit json
+    jsc.json.generator.map (json) -> TransactionRunner.unit Promise.resolve json
+    jsc.json.generator.map (json) ->
       TransactionRunner.step ->
         Promise.resolve json
-  )
+  ]
+
+  arbitrarySuccessfulRunner = jsc.bless generator: simpleSuccessfulRunnerGen
 
   {
     abortsWith
