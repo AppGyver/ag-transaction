@@ -17,9 +17,16 @@ transactions = require('./transactions')(Promise, Transaction)
 runners = require('./runners')(transactions, Promise, TransactionRunner)
 
 jsc = require 'jsverify'
-arbRunner = jsc.elements [
-  TransactionRunner.empty
-]
+arbRunner = jsc.oneof(
+  jsc.constant TransactionRunner.empty
+  jsc.bless generator: jsc.json.generator.map (json) ->
+    TransactionRunner.unit json
+  jsc.bless generator: jsc.json.generator.map (json) ->
+    TransactionRunner.unit Promise.resolve json
+  jsc.bless generator: jsc.json.generator.map (json) ->
+    TransactionRunner.step ->
+      Promise.resolve json
+)
 
 describe "ag-transaction.TransactionRunner", ->
   it "is a class", ->
