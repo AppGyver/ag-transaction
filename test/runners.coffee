@@ -38,7 +38,13 @@ module.exports = (transactions, Promise, TransactionRunner) ->
         Promise.resolve json
   ]
 
-  arbitrarySuccessfulRunner = jsc.bless generator: simpleSuccessfulRunnerGen
+  arbitrarySuccessfulRunner = jsc.bless generator: jsc.generator.recursive simpleSuccessfulRunnerGen, (gen) ->
+    jsc.generator.oneof [
+      gen
+      jsc.generator.tuple([gen, gen]).map ([r1, r2]) ->
+        r1.flatMapDone ->
+          r2
+    ]
 
   {
     abortsWith
