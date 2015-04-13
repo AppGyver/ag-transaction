@@ -16,6 +16,11 @@ TransactionRunner = require('../src/transaction-runner')(Promise, Transaction, P
 transactions = require('./transactions')(Promise, Transaction)
 runners = require('./runners')(transactions, Promise, TransactionRunner)
 
+jsc = require 'jsverify'
+arbRunner = jsc.elements [
+  TransactionRunner.empty
+]
+
 describe "ag-transaction.TransactionRunner", ->
   it "is a class", ->
     TransactionRunner.should.be.a 'function'
@@ -79,24 +84,24 @@ describe "ag-transaction.TransactionRunner", ->
 
   describe "instance", ->
     describe "run()", ->
-      it "is a function", ->
-        TransactionRunner.empty.run.should.be.a 'function'
+      jsc.property "is a function", arbRunner, (runner) ->
+        'function' is typeof runner.run
 
-      it "accepts a function that receives a PreparedTransaction", (done) ->
-        TransactionRunner.empty.run (th) ->
-          done asserting ->
-            th.should.be.an 'object'
-            th.should.have.property('done').be.an.instanceof Promise
+      jsc.property "accepts a function that receives a PreparedTransaction", arbRunner, (runner) ->
+        runner.run (th) ->
+          ('object' is typeof th) &&
+          (th.done instanceof Promise)
 
-      it "returns the asynchronous value from the passed function", ->
-        TransactionRunner.empty.run(-> 'value')
-          .should.eventually.equal 'value'
+      jsc.property "returns the asynchronous value from the passed function", arbRunner, "json", (runner, value) ->
+        runner.run((th) -> value).then (v) ->
+          v is value
 
-      it "allows the passed function to rely on done for the return value", ->
-        TransactionRunner.empty.run((th) ->
+      jsc.property "allows the passed function to rely on done for the return value", arbRunner, "json", (runner, value) ->
+        runner.run((th) ->
           th.done.then ->
-            'value'
-        ).should.eventually.equal 'value'
+            value
+        ).then (v) ->
+          v is value
 
     describe "flatMapDone()", ->
       it "is a function", ->
